@@ -1,0 +1,37 @@
+export const theme = {
+  colors: {
+    primary: '#F97316', // Orange
+    primaryLight: '#FFF7ED',
+    primaryDark: '#EA580C',
+    textMain: '#1F2937',
+    textSecondary: '#6B7280',
+    textLight: '#9CA3AF',
+    border: '#E5E7EB',
+    borderLight: '#F3F4F6',
+    background: '#FFFFFF',
+    backgroundLight: '#F9FAFB',
+    card: '#FFFFFF',
+    favorite: '#EF4444',
+    success: '#10B981',
+    info: '#3B82F6',
+    pieApartment: '#F97316',
+    pieHouse: '#FB923C',
+    piePenthouse: '#EA580C',
+    pieLand: '#FDBA74',
+    pieOthers: '#C2410C',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    full: 9999,
+  },
+};
