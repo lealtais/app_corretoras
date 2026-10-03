@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Header } from '../components/Header';
 import { PieChart, PieData } from '../components/PieChart';
+import { SalesLineChart } from '../components/SalesLineChart';
 import { MetricCard } from '../components/ui';
 import { theme } from '../constants/theme';
 
@@ -37,7 +38,6 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({
       <Header title="Estatísticas" onPressHome={onPressHome} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Metric Cards Grid - 2 columns using MetricCard */}
         <View style={styles.grid}>
           <MetricCard label="Imóveis cadastrados" value={statistics.totalCount} />
           <MetricCard label="Vendidos" value={statistics.soldCount} />
@@ -48,11 +48,12 @@ export const StatisticsScreen: React.FC<StatisticsScreenProps> = ({
           <MetricCard label="Terreno" value={statistics.landsCount} />
         </View>
 
-        {/* Section title for Pie Chart */}
         <View style={styles.chartSection}>
           <Text style={styles.chartTitle}>Distribuição por Tipo</Text>
           <PieChart data={pieData} size={180} />
         </View>
+
+        <SalesLineChart />
       </ScrollView>
     </View>
   );

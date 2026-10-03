@@ -6,7 +6,11 @@ import {
   Modal,
   ScrollView,
   Alert,
+  Image,
+  TouchableOpacity,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { Property } from '../types/property';
 import { Input, Button, Badge, IconButton } from '../components/ui';
@@ -64,13 +68,35 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setPrice('');
       setCondominium('');
       setIptu('');
-      setBedrooms('');
-      setBathrooms('');
-      setParkingSpaces('');
+      setBedrooms('2');
+      setBathrooms('2');
+      setParkingSpaces('1');
       setNotes('');
-      setImageUrl('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80');
+      setImageUrl('');
     }
   }, [propertyToEdit, visible]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Permissão necessária',
+        'É preciso permitir o acesso à galeria de fotos para adicionar a imagem do imóvel.'
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImageUrl(result.assets[0].uri);
+    }
+  };
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -125,7 +151,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={styles.container}>
-        {/* Header matching Figma */}
         <View style={styles.header}>
           <IconButton
             variant="ghost"
@@ -135,12 +160,32 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
           <Text style={styles.headerTitle}>{isEditing ? 'Editar imóvel' : 'Novo imóvel'}</Text>
           <IconButton
             variant="ghost"
-            icon={<Ionicons name="image-outline" size={26} color={theme.colors.textMain} />}
+            onPress={pickImage}
+            icon={<Ionicons name="image-outline" size={26} color={theme.colors.primary} />}
           />
         </View>
 
         <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-          {/* Nome do imóvel */}
+          <TouchableOpacity style={styles.imagePickerCard} onPress={pickImage} activeOpacity={0.8}>
+            {imageUrl ? (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: imageUrl }} style={styles.imagePreview} resizeMode="cover" />
+                <View style={styles.changeImageBadge}>
+                  <Ionicons name="camera" size={14} color="#FFFFFF" />
+                  <Text style={styles.changeImageText}>Trocar foto da galeria</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <View style={styles.imageIconCircle}>
+                  <Ionicons name="images-outline" size={28} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.imagePlaceholderText}>Toque para adicionar foto da galeria</Text>
+                <Text style={styles.imagePlaceholderSub}>JPG ou PNG do seu celular</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           <Input
             label="Nome do imóvel"
             placeholder="Ex: Casa condomínio Canto do Forte"
@@ -148,9 +193,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setName}
           />
 
-          {/* Tipo Selector via Reusable Badges */}
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Tipo</Text>
+            <Text style={styles.fieldLabel}>Tipo de Imóvel</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeSelectorRow}>
               {propertyTypes.map((t) => (
                 <Badge
@@ -163,7 +207,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             </ScrollView>
           </View>
 
-          {/* Localização */}
           <Input
             label="Localização"
             placeholder="Ex: Canto do Forte, Praia Grande"
@@ -171,7 +214,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setLocation}
           />
 
-          {/* Metragem */}
           <Input
             label="Metragem (m²)"
             placeholder="Ex: 800"
@@ -180,7 +222,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setArea}
           />
 
-          {/* Preço */}
           <Input
             label="Preço (R$)"
             placeholder="Ex: 2.800.000"
@@ -189,7 +230,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setPrice}
           />
 
-          {/* Condomínio */}
           <Input
             label="Condomínio (opcional)"
             placeholder="Ex: 1.000"
@@ -198,43 +238,80 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setCondominium}
           />
 
-          {/* IPTU */}
           <Input
-            label="IPTU"
+            label="IPTU (opcional)"
             placeholder="Ex: 200"
             keyboardType="numeric"
             value={iptu}
             onChangeText={setIptu}
           />
 
-          {/* Quant. quartos */}
-          <Input
-            label="Quant. quartos"
-            placeholder="Ex: 4"
-            keyboardType="numeric"
-            value={bedrooms}
-            onChangeText={setBedrooms}
-          />
+          <View style={styles.fieldGroup}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>Quantidade de Quartos</Text>
+              <Text style={styles.selectedCountText}>{bedrooms || '1'} quarto(s)</Text>
+            </View>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={8}
+              step={1}
+              value={parseInt(bedrooms, 10) || 1}
+              onValueChange={(val) => setBedrooms(val.toString())}
+              minimumTrackTintColor={theme.colors.primary}
+              maximumTrackTintColor="#E5E7EB"
+              thumbTintColor={theme.colors.primary}
+            />
+            <View style={styles.sliderLimitsRow}>
+              <Text style={styles.sliderLimitText}>1</Text>
+              <Text style={styles.sliderLimitText}>8</Text>
+            </View>
+          </View>
 
-          {/* Quant. banheiros */}
-          <Input
-            label="Quant. banheiros"
-            placeholder="Ex: 5"
-            keyboardType="numeric"
-            value={bathrooms}
-            onChangeText={setBathrooms}
-          />
+          <View style={styles.fieldGroup}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>Quantidade de Banheiros</Text>
+              <Text style={styles.selectedCountText}>{bathrooms || '1'} banheiro(s)</Text>
+            </View>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={8}
+              step={1}
+              value={parseInt(bathrooms, 10) || 1}
+              onValueChange={(val) => setBathrooms(val.toString())}
+              minimumTrackTintColor={theme.colors.primary}
+              maximumTrackTintColor="#E5E7EB"
+              thumbTintColor={theme.colors.primary}
+            />
+            <View style={styles.sliderLimitsRow}>
+              <Text style={styles.sliderLimitText}>1</Text>
+              <Text style={styles.sliderLimitText}>8</Text>
+            </View>
+          </View>
 
-          {/* Quant. vagas */}
-          <Input
-            label="Quant. vagas (opcional)"
-            placeholder="Ex: 2"
-            keyboardType="numeric"
-            value={parkingSpaces}
-            onChangeText={setParkingSpaces}
-          />
+          <View style={styles.fieldGroup}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>Quantidade de Vagas</Text>
+              <Text style={styles.selectedCountText}>{parkingSpaces || '0'} vaga(s)</Text>
+            </View>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={6}
+              step={1}
+              value={parseInt(parkingSpaces, 10) || 0}
+              onValueChange={(val) => setParkingSpaces(val.toString())}
+              minimumTrackTintColor={theme.colors.primary}
+              maximumTrackTintColor="#E5E7EB"
+              thumbTintColor={theme.colors.primary}
+            />
+            <View style={styles.sliderLimitsRow}>
+              <Text style={styles.sliderLimitText}>0</Text>
+              <Text style={styles.sliderLimitText}>6</Text>
+            </View>
+          </View>
 
-          {/* Anotações */}
           <Input
             label="Anotações"
             placeholder="Ex: Proprietário: (13) 99009-5719&#10;Com elevador&#10;Móveis planejados"
@@ -243,9 +320,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onChangeText={setNotes}
           />
 
-          {/* Orange OK button matching Figma */}
           <Button
-            label="OK"
+            label="Salvar Imóvel"
             variant="primary"
             onPress={handleSave}
             style={styles.okButton}
@@ -301,22 +377,107 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     paddingBottom: 60,
   },
+  imagePickerCard: {
+    marginBottom: 20,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: theme.colors.border,
+    borderStyle: 'dashed',
+    backgroundColor: '#FAFAFA',
+  },
+  imagePreviewContainer: {
+    width: '100%',
+    height: 180,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  changeImageBadge: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+  },
+  changeImageText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  imagePlaceholder: {
+    paddingVertical: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  imagePlaceholderText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.textMain,
+  },
+  imagePlaceholderSub: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
+  },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 16,
+  },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   fieldLabel: {
     fontSize: 13,
     color: theme.colors.textSecondary,
-    marginBottom: 5,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  selectedCountText: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    fontWeight: '700',
   },
   typeSelectorRow: {
     flexDirection: 'row',
     gap: 8,
     paddingVertical: 4,
   },
+  slider: {
+    width: '100%',
+    height: 38,
+    marginVertical: 4,
+  },
+  sliderLimitsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 6,
+    marginTop: -4,
+  },
+  sliderLimitText: {
+    fontSize: 11,
+    color: theme.colors.textLight,
+    fontWeight: '500',
+  },
   okButton: {
-    marginTop: 10,
+    marginTop: 14,
   },
   deleteButton: {
     marginTop: 14,

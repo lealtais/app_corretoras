@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, View, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Property } from './src/types/property';
@@ -12,6 +11,7 @@ import { StatisticsScreen } from './src/screens/StatisticsScreen';
 import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
 import { PropertyFormModal } from './src/screens/PropertyFormModal';
 import { AdvancedSearchModal } from './src/screens/AdvancedSearchModal';
+import { SplashScreen } from './src/screens/SplashScreen';
 
 export default function App() {
   const {
@@ -31,13 +31,12 @@ export default function App() {
 
   const [currentTab, setCurrentTab] = useState<TabType>('home');
 
-  // Modals state
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
 
-  // Sync selectedProperty when mutated
   const handleToggleFavorite = (id: string) => {
     toggleFavorite(id);
     if (selectedProperty && selectedProperty.id === id) {
@@ -74,8 +73,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      {isSplashVisible && (
+        <SplashScreen onFinish={() => setIsSplashVisible(false)} />
+      )}
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar style="dark" />
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
 
         <View style={styles.container}>
           {currentTab === 'home' && (
@@ -114,7 +116,6 @@ export default function App() {
           onPressAdd={handleOpenAdd}
         />
 
-        {/* Modal: Detalhes do Imóvel */}
         <PropertyDetailModal
           visible={!!selectedProperty}
           property={selectedProperty}
@@ -123,7 +124,6 @@ export default function App() {
           onToggleFavorite={handleToggleFavorite}
         />
 
-        {/* Modal: Novo Imóvel / Editar Imóvel */}
         <PropertyFormModal
           visible={isFormOpen}
           propertyToEdit={propertyToEdit}
@@ -135,7 +135,6 @@ export default function App() {
           onDelete={handleDeleteProperty}
         />
 
-        {/* Modal: Busca Avançada */}
         <AdvancedSearchModal
           visible={isAdvancedSearchOpen}
           currentFilter={activeFilter}
