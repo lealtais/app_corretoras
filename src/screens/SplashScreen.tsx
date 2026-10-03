@@ -3,12 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  Animated,
   Dimensions,
   TouchableOpacity,
   Image,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { animate } from 'motion';
 import { theme } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -34,66 +35,99 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
   const screenFadeOut = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.spring(logoScale, {
-          toValue: 1,
-          friction: 4,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoOpacity, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(haloOpacity, {
-          toValue: 0.35,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.spring(haloScale, {
-          toValue: 1.25,
-          friction: 3,
-          useNativeDriver: true,
-        }),
-      ]),
+    let isCancelled = false;
 
-      Animated.parallel([
-        Animated.timing(textOpacity, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
+    const runAnimation = async () => {
+      await Promise.all([
+        animate(0.3, 1, {
+          duration: 0.8,
+          ease: [0.16, 1, 0.3, 1],
+          onUpdate: (latest) => {
+            if (!isCancelled) logoScale.setValue(latest);
+          },
         }),
-        Animated.timing(textTranslateY, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
+        animate(0, 1, {
+          duration: 0.6,
+          ease: 'easeOut',
+          onUpdate: (latest) => {
+            if (!isCancelled) logoOpacity.setValue(latest);
+          },
         }),
-      ]),
+        animate(0, 0.35, {
+          duration: 0.6,
+          ease: 'easeOut',
+          onUpdate: (latest) => {
+            if (!isCancelled) haloOpacity.setValue(latest);
+          },
+        }),
+        animate(0.8, 1.25, {
+          duration: 0.8,
+          ease: [0.16, 1, 0.3, 1],
+          onUpdate: (latest) => {
+            if (!isCancelled) haloScale.setValue(latest);
+          },
+        }),
+      ]);
 
-      Animated.timing(progressScale, {
-        toValue: 1,
-        duration: 900,
-        useNativeDriver: true,
-      }),
+      if (isCancelled) return;
 
-      Animated.timing(screenFadeOut, {
-        toValue: 0,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onFinish();
-    });
+      await Promise.all([
+        animate(0, 1, {
+          duration: 0.5,
+          ease: 'easeOut',
+          onUpdate: (latest) => {
+            if (!isCancelled) textOpacity.setValue(latest);
+          },
+        }),
+        animate(20, 0, {
+          duration: 0.5,
+          ease: 'easeOut',
+          onUpdate: (latest) => {
+            if (!isCancelled) textTranslateY.setValue(latest);
+          },
+        }),
+      ]);
+
+      if (isCancelled) return;
+
+      await animate(0, 1, {
+        duration: 0.9,
+        ease: 'easeInOut',
+        onUpdate: (latest) => {
+          if (!isCancelled) progressScale.setValue(latest);
+        },
+      });
+
+      if (isCancelled) return;
+
+      await animate(1, 0, {
+        duration: 0.35,
+        ease: 'easeIn',
+        onUpdate: (latest) => {
+          if (!isCancelled) screenFadeOut.setValue(latest);
+        },
+      });
+
+      if (!isCancelled) {
+        onFinish();
+      }
+    };
+
+    runAnimation();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [logoScale, logoOpacity, haloScale, haloOpacity, textOpacity, textTranslateY, progressScale, screenFadeOut, onFinish]);
 
   const handleSkip = () => {
-    Animated.timing(screenFadeOut, {
-      toValue: 0,
-      duration: 150,
-      useNativeDriver: true,
-    }).start(() => {
+    animate(1, 0, {
+      duration: 0.15,
+      ease: 'easeIn',
+      onUpdate: (latest) => {
+        screenFadeOut.setValue(latest);
+      },
+    }).then(() => {
       onFinish();
     });
   };
