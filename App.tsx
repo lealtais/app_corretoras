@@ -3,7 +3,12 @@ import { StyleSheet, View, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Property } from './src/types/property';
-import { useProperties } from './src/hooks/useProperties';
+import {
+  useProperties,
+  useFavorites,
+  usePropertyFilters,
+  usePropertyStatistics,
+} from './src/hooks';
 import { BottomNav, TabType } from './src/components/BottomNav';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
@@ -14,20 +19,18 @@ import { AdvancedSearchModal } from './src/screens/AdvancedSearchModal';
 import { SplashScreen } from './src/screens/SplashScreen';
 
 export default function App() {
+  const { properties, setProperties, saveProperty, deleteProperty } = useProperties();
+  const { favoriteProperties, toggleFavorite } = useFavorites(properties, setProperties);
   const {
     filteredProperties,
-    favoriteProperties,
-    statistics,
     searchQuery,
     setSearchQuery,
     activeFilter,
     setActiveFilter,
     hasActiveAdvancedFilter,
     clearFilter,
-    toggleFavorite,
-    saveProperty,
-    deleteProperty,
-  } = useProperties();
+  } = usePropertyFilters(properties);
+  const statistics = usePropertyStatistics(properties);
 
   const [currentTab, setCurrentTab] = useState<TabType>('home');
 
