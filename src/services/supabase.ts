@@ -167,6 +167,38 @@ export async function supabaseRegister(
   };
 }
 
+export async function supabaseSocialLogin(
+  provider: 'Google' | 'Facebook' | 'Apple',
+  emailInput?: string
+): Promise<User> {
+  const normalizedEmail = (
+    emailInput || `${provider.toLowerCase()}.usuario@corretoras.com`
+  )
+    .trim()
+    .toLowerCase();
+
+  const checkUrl = `${SUPABASE_URL}/rest/v1/app_users?email=eq.${encodeURIComponent(
+    normalizedEmail
+  )}&select=id,name,email,role`;
+
+  const checkRes = await fetch(checkUrl, { headers: getSupabaseHeaders() });
+  if (checkRes.ok) {
+    const existing = await checkRes.json();
+    if (Array.isArray(existing) && existing.length > 0) {
+      const u = existing[0];
+      return {
+        id: String(u.id),
+        name: u.name,
+        email: u.email,
+        role: u.role === 'admin' ? 'admin' : 'client',
+      };
+    }
+  }
+
+  const displayName = normalizedEmail.split('@')[0];
+  return supabaseRegister(displayName, normalizedEmail, `oauth-${provider.toLowerCase()}`);
+}
+
 export async function supabaseFetchProperties(role: UserRole): Promise<Property[]> {
   const selectCols =
     role === 'admin'

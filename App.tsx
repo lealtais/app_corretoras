@@ -96,8 +96,18 @@ export default function App() {
       {isSplashVisible && (
         <SplashScreen onFinish={() => setIsSplashVisible(false)} />
       )}
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          { backgroundColor: currentUser ? '#FFFFFF' : '#09090B' },
+        ]}
+        edges={['top', 'left', 'right']}
+      >
+        <StatusBar
+          barStyle={currentUser ? 'dark-content' : 'light-content'}
+          backgroundColor={currentUser ? '#FFFFFF' : '#09090B'}
+          translucent={false}
+        />
 
         {!currentUser ? (
           <AuthScreen onAuthenticated={(user) => setCurrentUser(user)} />
