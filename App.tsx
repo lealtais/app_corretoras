@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, StatusBar } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { Property, User } from './src/types/property';
+import { resolveSupabaseOAuthCallback } from './src/services/supabase';
 import {
   useProperties,
   useFavorites,
@@ -20,6 +21,14 @@ import { SplashScreen } from './src/screens/SplashScreen';
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isSplashVisible, setIsSplashVisible] = useState(true);
+
+  useEffect(() => {
+    resolveSupabaseOAuthCallback().then((oauthUser) => {
+      if (oauthUser) {
+        setCurrentUser(oauthUser);
+      }
+    });
+  }, []);
 
   const activeRole = currentUser?.role || 'client';
   const isAdmin = activeRole === 'admin';

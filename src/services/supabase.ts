@@ -1,3 +1,4 @@
+import { Linking, Platform } from 'react-native';
 import { Property, User, UserRole, AIImageMode } from '../types/property';
 import { AGENCY_CONFIG } from '../constants/agency';
 
@@ -167,18 +168,49 @@ export async function supabaseRegister(
   };
 }
 
-export async function supabaseSocialLogin(
-  provider: 'Google' | 'Facebook' | 'Apple',
-  emailInput?: string
-): Promise<User> {
-  const normalizedEmail = (
-    emailInput || `${provider.toLowerCase()}.usuario@corretoras.com`
-  )
-    .trim()
-    .toLowerCase();
+export function startSupabaseOAuth(provider: 'google' | 'facebook' | 'apple'): void {
+  const redirectUri =
+    Platform.OS === 'web' && typeof window !== 'undefined'
+      ? window.location.origin
+      : 'http://localhost:8081';
+
+  const authUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${encodeURIComponent(
+    redirectUri
+  )}`;
+
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.location.href = authUrl;
+  } else {
+    Linking.openURL(authUrl);
+  }
+}
+
+export async function resolveSupabaseOAuthCallback(): Promise<User | null> {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+
+  const hash = window.location.hash;
+  if (!hash || !hash.includes('access_token=')) return null;
+
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const accessToken = params.get('access_token');
+  if (!accessToken) return null;
+
+  window.history.replaceState(null, '', window.location.pathname);
+
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!userRes.ok) return null;
+  const authUser = await userRes.json();
+  const email = String(authUser.email || '').trim().toLowerCase();
+  if (!email) return null;
 
   const checkUrl = `${SUPABASE_URL}/rest/v1/app_users?email=eq.${encodeURIComponent(
-    normalizedEmail
+    email
   )}&select=id,name,email,role`;
 
   const checkRes = await fetch(checkUrl, { headers: getSupabaseHeaders() });
@@ -195,8 +227,12 @@ export async function supabaseSocialLogin(
     }
   }
 
-  const displayName = normalizedEmail.split('@')[0];
-  return supabaseRegister(displayName, normalizedEmail, `oauth-${provider.toLowerCase()}`);
+  const displayName =
+    authUser.user_metadata?.full_name ||
+    authUser.user_metadata?.name ||
+    email.split('@')[0];
+
+  return supabaseRegister(displayName, email, `oauth-${authUser.id}`);
 }
 
 export async function supabaseFetchProperties(role: UserRole): Promise<Property[]> {

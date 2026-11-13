@@ -8,7 +8,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Modal,
 } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +15,7 @@ import { User } from '../types/property';
 import {
   supabaseLogin,
   supabaseRegister,
-  supabaseSocialLogin,
+  startSupabaseOAuth,
 } from '../services/supabase';
 
 interface AuthScreenProps {
@@ -59,11 +58,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const [socialModalProvider, setSocialModalProvider] = useState<
-    'Google' | 'Facebook' | 'Apple' | null
-  >(null);
-  const [socialEmail, setSocialEmail] = useState('');
-
   const handleSubmit = async () => {
     setErrorMessage('');
     const trimmedEmail = email.trim().toLowerCase();
@@ -90,26 +84,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
     } catch (err: any) {
       setIsLoading(false);
       setErrorMessage(err?.message || 'Erro ao autenticar.');
-    }
-  };
-
-  const handleConfirmSocialLogin = async () => {
-    if (!socialModalProvider) return;
-    const chosenEmail =
-      socialEmail.trim().toLowerCase() ||
-      (email.trim().toLowerCase() || `${socialModalProvider.toLowerCase()}@corretoras.com`);
-
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      const user = await supabaseSocialLogin(socialModalProvider, chosenEmail);
-      setSocialModalProvider(null);
-      setIsLoading(false);
-      onAuthenticated(user);
-    } catch (err: any) {
-      setSocialModalProvider(null);
-      setIsLoading(false);
-      setErrorMessage(err?.message || 'Não foi possível entrar.');
     }
   };
 
@@ -206,10 +180,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             <TouchableOpacity
               style={styles.socialButton}
               activeOpacity={0.8}
-              onPress={() => {
-                setSocialEmail(email);
-                setSocialModalProvider('Google');
-              }}
+              onPress={() => startSupabaseOAuth('google')}
             >
               <GoogleColorIcon />
             </TouchableOpacity>
@@ -217,10 +188,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             <TouchableOpacity
               style={styles.socialButton}
               activeOpacity={0.8}
-              onPress={() => {
-                setSocialEmail(email);
-                setSocialModalProvider('Facebook');
-              }}
+              onPress={() => startSupabaseOAuth('facebook')}
             >
               <View style={styles.facebookCircle}>
                 <Ionicons name="logo-facebook" size={20} color="#1877F2" />
@@ -230,10 +198,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             <TouchableOpacity
               style={styles.socialButton}
               activeOpacity={0.8}
-              onPress={() => {
-                setSocialEmail(email);
-                setSocialModalProvider('Apple');
-              }}
+              onPress={() => startSupabaseOAuth('apple')}
             >
               <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
             </TouchableOpacity>
@@ -256,47 +221,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           </View>
         </View>
       </ScrollView>
-
-      <Modal
-        visible={socialModalProvider !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSocialModalProvider(null)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              Continuar com {socialModalProvider}
-            </Text>
-            <Text style={styles.modalSubtitle}>
-              Informe o e-mail da sua conta {socialModalProvider} para acessar:
-            </Text>
-            <TextInput
-              style={styles.darkInput}
-              placeholder={`seuemail@${socialModalProvider?.toLowerCase()}.com`}
-              placeholderTextColor="#71717A"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={socialEmail}
-              onChangeText={setSocialEmail}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancelBtn}
-                onPress={() => setSocialModalProvider(null)}
-              >
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalConfirmBtn}
-                onPress={handleConfirmSocialLogin}
-              >
-                <Text style={styles.modalConfirmText}>Continuar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -433,62 +357,6 @@ const styles = StyleSheet.create({
   },
   footerAction: {
     color: '#FF6B00',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: '#121215',
-    borderRadius: 14,
-    padding: 22,
-    borderWidth: 1,
-    borderColor: '#27272A',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#A1A1AA',
-    marginBottom: 16,
-    lineHeight: 18,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-    marginTop: 18,
-  },
-  modalCancelBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#1C1C1F',
-  },
-  modalCancelText: {
-    color: '#A1A1AA',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  modalConfirmBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#FF6B00',
-  },
-  modalConfirmText: {
-    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },
