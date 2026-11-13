@@ -24,8 +24,8 @@ interface AuthScreenProps {
 
 const BrandLogoIcon = () => (
   <Svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-    <Rect x={2} y={2} width={13} height={13} rx={3} fill="#FFFFFF" />
-    <Rect x={13} y={13} width={13} height={13} rx={3} fill="#FFFFFF" />
+    <Rect x={2} y={2} width={13} height={13} rx={3} fill="#09090B" />
+    <Rect x={13} y={13} width={13} height={13} rx={3} fill="#09090B" />
   </Svg>
 );
 
@@ -114,7 +114,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
             <View style={styles.fieldBlock}>
               <Text style={styles.label}>Nome</Text>
               <TextInput
-                style={styles.darkInput}
+                style={styles.input}
                 placeholder="Digite seu nome completo"
                 placeholderTextColor="#71717A"
                 value={name}
@@ -126,7 +126,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           <View style={styles.fieldBlock}>
             <Text style={styles.label}>Email</Text>
             <TextInput
-              style={styles.darkInput}
+              style={styles.input}
               placeholder="seuemail@seudominio.com"
               placeholderTextColor="#71717A"
               keyboardType="email-address"
@@ -139,7 +139,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           <View style={styles.fieldBlock}>
             <Text style={styles.label}>Password</Text>
             <TextInput
-              style={styles.darkInput}
+              style={styles.input}
               placeholder={mode === 'login' ? 'Digite sua senha' : 'Crie uma senha'}
               placeholderTextColor="#71717A"
               secureTextEntry
@@ -150,7 +150,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
 
           {errorMessage !== '' && (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle" size={16} color="#F87171" />
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           )}
@@ -190,9 +190,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               activeOpacity={0.8}
               onPress={() => startSupabaseOAuth('facebook')}
             >
-              <View style={styles.facebookCircle}>
-                <Ionicons name="logo-facebook" size={20} color="#1877F2" />
-              </View>
+              <Ionicons name="logo-facebook" size={22} color="#1877F2" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -200,7 +198,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               activeOpacity={0.8}
               onPress={() => startSupabaseOAuth('apple')}
             >
-              <Ionicons name="logo-apple" size={22} color="#FFFFFF" />
+              <Ionicons name="logo-apple" size={22} color="#09090B" />
             </TouchableOpacity>
           </View>
 
@@ -228,7 +226,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#09090B',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
@@ -247,13 +245,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#09090B',
     letterSpacing: -0.5,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 14,
-    color: '#A1A1AA',
+    color: '#52525B',
     lineHeight: 21,
     marginBottom: 28,
   },
@@ -263,45 +261,43 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#09090B',
     marginBottom: 8,
   },
-  darkInput: {
-    backgroundColor: '#1C1C1F',
+  input: {
+    backgroundColor: '#F4F4F5',
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#09090B',
     borderWidth: 1,
-    borderColor: '#27272A',
+    borderColor: '#E4E4E7',
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
+    borderColor: '#FECACA',
     padding: 12,
     borderRadius: 10,
     marginBottom: 16,
   },
   errorText: {
-    color: '#F87171',
+    color: '#DC2626',
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
   },
   signInButton: {
-    backgroundColor: '#1C1C1F',
+    backgroundColor: '#09090B',
     borderRadius: 10,
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,
-    borderWidth: 1,
-    borderColor: '#27272A',
   },
   signInButtonText: {
     color: '#FFFFFF',
@@ -316,7 +312,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#27272A',
+    backgroundColor: '#E4E4E7',
   },
   dividerText: {
     color: '#71717A',
@@ -331,20 +327,12 @@ const styles = StyleSheet.create({
   socialButton: {
     flex: 1,
     height: 52,
-    backgroundColor: '#1C1C1F',
+    backgroundColor: '#F4F4F5',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#27272A',
-  },
-  facebookCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: '#E4E4E7',
   },
   footerRow: {
     flexDirection: 'row',
