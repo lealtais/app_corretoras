@@ -188,9 +188,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
         >
           <View style={styles.titleRow}>
             <Text style={styles.titleMain}>Corretoras</Text>
-            <Text style={styles.titleHighlight}>de Sucesso</Text>
+            <Text style={styles.titleHighlight}>de Sucesso Imóveis</Text>
           </View>
-          <Text style={styles.subtitle}>Gestão Imobiliária Inteligente</Text>
+          <Text style={styles.subtitle}>Catálogo & Gestão Imobiliária Inteligente</Text>
         </Animated.View>
 
         <View style={styles.progressBarBackground}>
