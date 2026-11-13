@@ -1,6 +1,11 @@
 import { Linking, Platform } from 'react-native';
 import { Property, User, UserRole, AIImageMode } from '../types/property';
 import { AGENCY_CONFIG } from '../constants/agency';
+import {
+  loadProfileExtrasAsync,
+  saveProfileExtrasAsync,
+  saveSessionUser,
+} from './storage';
 
 const DEFAULT_SUPABASE_URL = 'https://zxmyixllnfxqhiqnxemu.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_j9Up_WaymPsu3IVmKohEuw_bBbFh3NJ';
@@ -125,12 +130,20 @@ export async function supabaseLogin(email: string, password: string): Promise<Us
     throw new Error('E-mail ou senha incorretos.');
   }
   const u = rows[0];
-  return {
+  const extras = await loadProfileExtrasAsync(u.email);
+  const user: User = {
     id: String(u.id),
     name: u.name,
     email: u.email,
     role: u.role === 'admin' ? 'admin' : 'client',
+    avatarUrl: extras.avatarUrl,
+    city: extras.city,
+    phone: extras.phone,
+    rentalsCount: typeof extras.rentalsCount === 'number' ? extras.rentalsCount : 0,
+    preferredRegion: extras.preferredRegion,
   };
+  await saveSessionUser(user);
+  return user;
 }
 
 export async function supabaseRegister(
@@ -160,12 +173,42 @@ export async function supabaseRegister(
 
   const rows = await res.json();
   const u = Array.isArray(rows) ? rows[0] : rows;
-  return {
+  const extras = await loadProfileExtrasAsync(u.email);
+  const user: User = {
     id: String(u.id),
     name: u.name,
     email: u.email,
     role: 'client',
+    avatarUrl: extras.avatarUrl,
+    city: extras.city,
+    phone: extras.phone,
+    rentalsCount: typeof extras.rentalsCount === 'number' ? extras.rentalsCount : 0,
+    preferredRegion: extras.preferredRegion,
   };
+  await saveSessionUser(user);
+  return user;
+}
+
+export async function supabaseUpdateUserProfile(user: User): Promise<User> {
+  await saveProfileExtrasAsync(user.email, {
+    avatarUrl: user.avatarUrl,
+    city: user.city,
+    phone: user.phone,
+    rentalsCount: user.rentalsCount,
+    preferredRegion: user.preferredRegion,
+  });
+
+  const url = `${SUPABASE_URL}/rest/v1/app_users?id=eq.${encodeURIComponent(user.id)}`;
+  await fetch(url, {
+    method: 'PATCH',
+    headers: getSupabaseHeaders(),
+    body: JSON.stringify({
+      name: user.name.trim(),
+    }),
+  });
+
+  await saveSessionUser(user);
+  return user;
 }
 
 export function startSupabaseOAuth(provider: 'google' | 'facebook' | 'apple'): void {
@@ -218,12 +261,20 @@ export async function resolveSupabaseOAuthCallback(): Promise<User | null> {
     const existing = await checkRes.json();
     if (Array.isArray(existing) && existing.length > 0) {
       const u = existing[0];
-      return {
+      const extras = await loadProfileExtrasAsync(u.email);
+      const user: User = {
         id: String(u.id),
         name: u.name,
         email: u.email,
         role: u.role === 'admin' ? 'admin' : 'client',
+        avatarUrl: extras.avatarUrl,
+        city: extras.city,
+        phone: extras.phone,
+        rentalsCount: typeof extras.rentalsCount === 'number' ? extras.rentalsCount : 0,
+        preferredRegion: extras.preferredRegion,
       };
+      await saveSessionUser(user);
+      return user;
     }
   }
 

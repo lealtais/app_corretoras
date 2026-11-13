@@ -15,7 +15,6 @@ import { User } from '../types/property';
 import {
   supabaseLogin,
   supabaseRegister,
-  startSupabaseOAuth,
 } from '../services/supabase';
 
 interface AuthScreenProps {
@@ -29,22 +28,22 @@ const BrandLogoIcon = () => (
   </Svg>
 );
 
-const GoogleColorIcon = () => (
+const GoogleDisabledIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24">
     <Path
-      fill="#EA4335"
+      fill="#A1A1AA"
       d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"
     />
     <Path
-      fill="#4285F4"
+      fill="#A1A1AA"
       d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"
     />
     <Path
-      fill="#FBBC05"
+      fill="#A1A1AA"
       d="M5.3 14.8c-.2-.8-.4-1.8-.4-2.8s.2-2 .4-2.8L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.8z"
     />
     <Path
-      fill="#34A853"
+      fill="#A1A1AA"
       d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 19.9 7.4 23 12 23z"
     />
   </Svg>
@@ -177,29 +176,17 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           </View>
 
           <View style={styles.socialRow}>
-            <TouchableOpacity
-              style={styles.socialButton}
-              activeOpacity={0.8}
-              onPress={() => startSupabaseOAuth('google')}
-            >
-              <GoogleColorIcon />
-            </TouchableOpacity>
+            <View style={styles.socialButtonDisabled}>
+              <GoogleDisabledIcon />
+            </View>
 
-            <TouchableOpacity
-              style={styles.socialButton}
-              activeOpacity={0.8}
-              onPress={() => startSupabaseOAuth('facebook')}
-            >
-              <Ionicons name="logo-facebook" size={22} color="#1877F2" />
-            </TouchableOpacity>
+            <View style={styles.socialButtonDisabled}>
+              <Ionicons name="logo-facebook" size={22} color="#A1A1AA" />
+            </View>
 
-            <TouchableOpacity
-              style={styles.socialButton}
-              activeOpacity={0.8}
-              onPress={() => startSupabaseOAuth('apple')}
-            >
-              <Ionicons name="logo-apple" size={22} color="#09090B" />
-            </TouchableOpacity>
+            <View style={styles.socialButtonDisabled}>
+              <Ionicons name="logo-apple" size={22} color="#A1A1AA" />
+            </View>
           </View>
 
           <View style={styles.footerRow}>
@@ -324,7 +311,7 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 32,
   },
-  socialButton: {
+  socialButtonDisabled: {
     flex: 1,
     height: 52,
     backgroundColor: '#F4F4F5',
@@ -333,6 +320,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E4E4E7',
+    opacity: 0.55,
   },
   footerRow: {
     flexDirection: 'row',

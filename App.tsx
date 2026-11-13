@@ -5,6 +5,11 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Property, User } from './src/types/property';
 import { resolveSupabaseOAuthCallback } from './src/services/supabase';
 import {
+  loadSessionUser,
+  saveSessionUser,
+  clearSessionUser,
+} from './src/services/storage';
+import {
   useProperties,
   useFavorites,
   usePropertyFilters,
@@ -12,6 +17,7 @@ import {
 import { BottomNav, TabType } from './src/components/BottomNav';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
+import { ProfileScreen } from './src/screens/ProfileScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
 import { PropertyFormModal } from './src/screens/PropertyFormModal';
@@ -23,12 +29,20 @@ export default function App() {
   const [isSplashVisible, setIsSplashVisible] = useState(true);
 
   useEffect(() => {
-    resolveSupabaseOAuthCallback().then((oauthUser) => {
+    resolveSupabaseOAuthCallback().then(async (oauthUser) => {
       if (oauthUser) {
         setCurrentUser(oauthUser);
+        return;
       }
+      const stored = await loadSessionUser();
+      if (stored) setCurrentUser(stored);
     });
   }, []);
+
+  const handleUpdateUser = (updated: User) => {
+    setCurrentUser(updated);
+    saveSessionUser(updated);
+  };
 
   const activeRole = currentUser?.role || 'client';
   const isAdmin = activeRole === 'admin';
@@ -98,6 +112,7 @@ export default function App() {
     setPropertyToEdit(null);
     setCurrentTab('home');
     setCurrentUser(null);
+    clearSessionUser();
   };
 
   return (
@@ -138,6 +153,17 @@ export default function App() {
                   onSelectProperty={(prop) => setSelectedProperty(prop)}
                   onToggleFavorite={handleToggleFavorite}
                   onPressHome={() => setCurrentTab('home')}
+                />
+              )}
+
+              {currentTab === 'profile' && (
+                <ProfileScreen
+                  currentUser={currentUser}
+                  favoriteCount={favoriteProperties.length}
+                  onUpdateUser={handleUpdateUser}
+                  onLogout={handleLogout}
+                  onPressHome={() => setCurrentTab('home')}
+                  onPressFavorites={() => setCurrentTab('favorites')}
                 />
               )}
             </View>

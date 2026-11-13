@@ -1,6 +1,7 @@
-import { useMemo, Dispatch, SetStateAction } from 'react';
+import { useEffect, useMemo, Dispatch, SetStateAction } from 'react';
 import { Property } from '../types/property';
 import { isSupabaseConfigured, supabaseUpdateFavorite } from '../services/supabase';
+import { saveFavoriteIdsAsync } from '../services/storage';
 
 export function useFavorites(
   properties: Property[],
@@ -22,6 +23,11 @@ export function useFavorites(
   const favoriteProperties = useMemo(() => {
     return properties.filter((p) => p.isFavorite);
   }, [properties]);
+
+  useEffect(() => {
+    if (properties.length === 0) return;
+    saveFavoriteIdsAsync(favoriteProperties.map((p) => p.id));
+  }, [favoriteProperties, properties.length]);
 
   return {
     favoriteProperties,

@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { animate } from 'motion';
 import { theme } from '../constants/theme';
+import { BrandArchitecturalLogo } from '../components/LucideIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -149,7 +150,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             />
           ) : (
             <View style={styles.iconWrapper}>
-              <Ionicons name="business" size={48} color={theme.colors.primary} />
+              <BrandArchitecturalLogo size={42} color="#09090B" />
             </View>
           )}
         </Animated.View>

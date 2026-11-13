@@ -29,6 +29,46 @@ interface HomeScreenProps {
   onLogout: () => void;
 }
 
+interface QuickChip {
+  key: string;
+  label: string;
+  isActive: (f: SearchFilter) => boolean;
+  toggle: (f: SearchFilter) => SearchFilter;
+}
+
+const QUICK_CHIPS: QuickChip[] = [
+  {
+    key: 'beach-0',
+    label: 'Frente Mar',
+    isActive: (f) => f.maxBeachDistance === 0,
+    toggle: (f) => ({ ...f, maxBeachDistance: f.maxBeachDistance === 0 ? undefined : 0 }),
+  },
+  {
+    key: 'beach-200',
+    label: 'Até 200m da praia',
+    isActive: (f) => f.maxBeachDistance === 200,
+    toggle: (f) => ({ ...f, maxBeachDistance: f.maxBeachDistance === 200 ? undefined : 200 }),
+  },
+  ...[2, 3, 4].map((q) => ({
+    key: `bed-${q}`,
+    label: `${q}+ quartos`,
+    isActive: (f: SearchFilter) => f.bedrooms === q,
+    toggle: (f: SearchFilter) => ({ ...f, bedrooms: f.bedrooms === q ? undefined : q }),
+  })),
+  {
+    key: 'price-950',
+    label: 'Até R$ 950 mil',
+    isActive: (f) => f.maxPrice === 950000,
+    toggle: (f) => ({ ...f, maxPrice: f.maxPrice === 950000 ? undefined : 950000 }),
+  },
+  {
+    key: 'price-1500',
+    label: 'Até R$ 1,5 mi',
+    isActive: (f) => f.maxPrice === 1500000,
+    toggle: (f) => ({ ...f, maxPrice: f.maxPrice === 1500000 ? undefined : 1500000 }),
+  },
+];
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   properties,
   searchQuery,
@@ -43,28 +83,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   currentUser,
   onLogout,
 }) => {
-  const toggleBedroomFilter = (bedrooms?: number) => {
-    onUpdateFilter({
-      ...activeFilter,
-      bedrooms: activeFilter.bedrooms === bedrooms ? undefined : bedrooms,
-    });
-  };
-
-  const toggleBeachFilter = (maxMeters?: number) => {
-    onUpdateFilter({
-      ...activeFilter,
-      maxBeachDistance:
-        activeFilter.maxBeachDistance === maxMeters ? undefined : maxMeters,
-    });
-  };
-
-  const togglePriceFilter = (maxPrice?: number) => {
-    onUpdateFilter({
-      ...activeFilter,
-      maxPrice: activeFilter.maxPrice === maxPrice ? undefined : maxPrice,
-    });
-  };
-
   return (
     <View style={styles.container}>
       <Header currentUser={currentUser} onLogout={onLogout} />
@@ -83,105 +101,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.quickFiltersRow}
         >
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              activeFilter.maxBeachDistance === 0 && styles.filterChipActive,
-            ]}
-            onPress={() => toggleBeachFilter(0)}
-          >
-            <Ionicons
-              name="sunny-outline"
-              size={13}
-              color={activeFilter.maxBeachDistance === 0 ? '#FFFFFF' : '#0369A1'}
-            />
-            <Text
-              style={[
-                styles.filterChipText,
-                activeFilter.maxBeachDistance === 0 && styles.filterChipTextActive,
-              ]}
-            >
-              Frente Mar
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              activeFilter.maxBeachDistance === 200 && styles.filterChipActive,
-            ]}
-            onPress={() => toggleBeachFilter(200)}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                activeFilter.maxBeachDistance === 200 && styles.filterChipTextActive,
-              ]}
-            >
-              Até 200m da praia
-            </Text>
-          </TouchableOpacity>
-
-          {[2, 3, 4].map((q) => (
-            <TouchableOpacity
-              key={`bed-${q}`}
-              style={[
-                styles.filterChip,
-                activeFilter.bedrooms === q && styles.filterChipActive,
-              ]}
-              onPress={() => toggleBedroomFilter(q)}
-            >
-              <Ionicons
-                name="bed-outline"
-                size={13}
-                color={
-                  activeFilter.bedrooms === q ? '#FFFFFF' : theme.colors.textSecondary
-                }
-              />
-              <Text
-                style={[
-                  styles.filterChipText,
-                  activeFilter.bedrooms === q && styles.filterChipTextActive,
-                ]}
+          {QUICK_CHIPS.map((chip) => {
+            const active = chip.isActive(activeFilter);
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                style={[styles.filterChip, active && styles.filterChipActive]}
+                onPress={() => onUpdateFilter(chip.toggle(activeFilter))}
+                activeOpacity={0.8}
               >
-                {q}+ quartos
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              activeFilter.maxPrice === 950000 && styles.filterChipActive,
-            ]}
-            onPress={() => togglePriceFilter(950000)}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                activeFilter.maxPrice === 950000 && styles.filterChipTextActive,
-              ]}
-            >
-              Até R$ 950 mil
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              activeFilter.maxPrice === 1500000 && styles.filterChipActive,
-            ]}
-            onPress={() => togglePriceFilter(1500000)}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                activeFilter.maxPrice === 1500000 && styles.filterChipTextActive,
-              ]}
-            >
-              Até R$ 1,5 mi
-            </Text>
-          </TouchableOpacity>
+                <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
 
         {hasActiveAdvancedFilter && (
@@ -239,9 +173,6 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   filterChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
@@ -285,7 +216,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: theme.spacing.lg,
-    paddingBottom: 20,
+    paddingBottom: 108,
   },
   emptyContainer: {
     alignItems: 'center',

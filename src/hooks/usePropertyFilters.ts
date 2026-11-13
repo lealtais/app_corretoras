@@ -1,9 +1,23 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Property, SearchFilter, UserRole } from '../types/property';
+import { loadActiveFilterAsync, saveActiveFilterAsync } from '../services/storage';
 
 export function usePropertyFilters(properties: Property[], role: UserRole = 'client') {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<SearchFilter>({});
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    loadActiveFilterAsync().then((saved) => {
+      hydratedRef.current = true;
+      if (Object.keys(saved).length > 0) setActiveFilter(saved);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    saveActiveFilterAsync(activeFilter);
+  }, [activeFilter]);
 
   const clearFilter = () => {
     setActiveFilter({});

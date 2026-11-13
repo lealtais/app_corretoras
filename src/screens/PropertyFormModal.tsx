@@ -17,6 +17,7 @@ import { Property, AIImageMode } from '../types/property';
 import { Input, Button, Badge, IconButton } from '../components/ui';
 import { theme } from '../constants/theme';
 import { AGENCY_CONFIG } from '../constants/agency';
+import { geocodeAndCalculateBeachDistance } from '../utils/beachDistanceCalculator';
 
 interface PropertyFormModalProps {
   visible: boolean;
@@ -69,7 +70,9 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   >('Apartamento');
   const [status, setStatus] = useState<'Disponível' | 'Reservado' | 'Vendido'>('Disponível');
   const [location, setLocation] = useState('');
+  const [internalAddress, setInternalAddress] = useState('');
   const [beachDistance, setBeachDistance] = useState('100');
+  const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
   const [area, setArea] = useState('');
   const [price, setPrice] = useState('');
   const [condominium, setCondominium] = useState('');
@@ -93,6 +96,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setType(propertyToEdit.type);
       setStatus(propertyToEdit.status);
       setLocation(propertyToEdit.location);
+      setInternalAddress(propertyToEdit.location);
       setBeachDistance(String(propertyToEdit.beachDistance ?? 100));
       setArea(propertyToEdit.area.toString());
       setPrice(propertyToEdit.price.toString());
@@ -116,7 +120,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setType('Apartamento');
       setStatus('Disponível');
       setLocation('');
-      setBeachDistance('100');
+      setInternalAddress('');
+      setBeachDistance('0');
       setArea('');
       setPrice('');
       setCondominium('');
@@ -193,7 +198,16 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleCalculateFromAddress = async (addrText: string) => {
+    const query = addrText.trim() || location.trim();
+    if (!query) return;
+    setIsCalculatingDistance(true);
+    const result = await geocodeAndCalculateBeachDistance(query);
+    setBeachDistance(String(result.distanceMeters));
+    setIsCalculatingDistance(false);
+  };
+
+  const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Atenção', 'Informe o título/nome do imóvel.');
       return;
@@ -208,6 +222,11 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       return;
     }
 
+    const queryToGeocode = internalAddress.trim() || location.trim();
+    setIsCalculatingDistance(true);
+    const geoResult = await geocodeAndCalculateBeachDistance(queryToGeocode);
+    setIsCalculatingDistance(false);
+
     const notesList = notes
       .split('\n')
       .map((n) => n.trim())
@@ -221,7 +240,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       status,
       location: location.trim(),
       agencyAddress: AGENCY_CONFIG.address,
-      beachDistance: Math.max(0, parseInt(beachDistance.replace(/\D/g, ''), 10) || 0),
+      beachDistance: geoResult.distanceMeters,
       area: parseFloat(area) || 0,
       price: parsedPrice,
       condominium: condominium ? parseFloat(condominium.replace(/\D/g, '')) : undefined,
@@ -427,7 +446,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
           <View style={styles.fixedAgencyField}>
             <View style={styles.fixedAgencyHeader}>
-              <Ionicons name="business" size={16} color={theme.colors.primary} />
               <Text style={styles.fixedAgencyLabel}>
                 Endereço Fixo da Imobiliária
               </Text>
@@ -477,44 +495,40 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
           </View>
 
           <Input
-            label="Bairro / Região (Sem endereço exato)"
+            label="Bairro / Região (Visível para o cliente)"
             placeholder="Ex: Canto do Forte, Praia Grande"
             value={location}
-            onChangeText={setLocation}
+            onChangeText={(txt) => {
+              setLocation(txt);
+              if (!internalAddress.trim()) {
+                handleCalculateFromAddress(txt);
+              }
+            }}
           />
 
-          <View style={styles.fieldGroup}>
-            <View style={styles.fieldLabelRow}>
-              <Text style={styles.fieldLabel}>Distância da Praia (em metros)</Text>
-              <Text style={styles.selectedCountText}>
-                {parseInt(beachDistance, 10) <= 0
-                  ? 'Frente Mar (0m)'
-                  : `${beachDistance} metros da praia`}
+          <Input
+            label="Endereço do Imóvel (Interno — calcula a distância real até a praia)"
+            placeholder="Ex: Av. Pres. Castelo Branco, 1200, Canto do Forte"
+            value={internalAddress}
+            onChangeText={(txt) => {
+              setInternalAddress(txt);
+              handleCalculateFromAddress(txt);
+            }}
+          />
+
+          <View style={styles.fixedAgencyField}>
+            <View style={styles.fixedAgencyHeader}>
+              <Text style={styles.fixedAgencyLabel}>
+                Distância Calculada até a Praia (Geolocalização Real)
               </Text>
             </View>
-            <View style={styles.beachQuickRow}>
-              {[
-                { label: 'Frente Mar (0m)', val: '0' },
-                { label: '50m', val: '50' },
-                { label: '150m', val: '150' },
-                { label: '300m', val: '300' },
-                { label: '500m', val: '500' },
-              ].map((b) => (
-                <Badge
-                  key={b.val}
-                  label={b.label}
-                  selected={beachDistance === b.val}
-                  onPress={() => setBeachDistance(b.val)}
-                />
-              ))}
-            </View>
-            <Input
-              label="Distância exata da praia (metros)"
-              placeholder="Ex: 150"
-              keyboardType="numeric"
-              value={beachDistance}
-              onChangeText={setBeachDistance}
-            />
+            <Text style={styles.fixedAgencyValue}>
+              {isCalculatingDistance
+                ? 'Calculando distância pelas coordenadas do endereço...'
+                : parseInt(beachDistance, 10) <= 0
+                ? 'Frente mar (0m)'
+                : `${beachDistance}m da praia`}
+            </Text>
           </View>
 
           <Input

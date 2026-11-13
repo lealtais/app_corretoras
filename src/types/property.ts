@@ -5,6 +5,11 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  avatarUrl?: string;
+  city?: string;
+  phone?: string;
+  rentalsCount?: number;
+  preferredRegion?: string;
 }
 
 export type AIImageMode = 'enhance' | 'furnish' | 'declutter';

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../constants/theme';
 import { User } from '../types/property';
 import { AGENCY_CONFIG } from '../constants/agency';
+import { BrandArchitecturalLogo, LucideMapPin } from './LucideIcons';
 
 interface HeaderProps {
   title?: string;
@@ -15,8 +16,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   title,
   onPressHome,
-  currentUser,
-  onLogout,
 }) => {
   return (
     <View style={styles.container}>
@@ -27,28 +26,17 @@ export const Header: React.FC<HeaderProps> = ({
           activeOpacity={0.7}
         >
           <View style={styles.iconBadge}>
-            <Ionicons name="business" size={22} color={theme.colors.primary} />
+            <BrandArchitecturalLogo size={22} color="#09090B" />
           </View>
           <View style={styles.titleColumn}>
             <Text style={styles.brandTitle}>Corretoras de Sucesso</Text>
             <Text style={styles.brandSubtitle}>Imóveis</Text>
           </View>
         </TouchableOpacity>
-
-        {currentUser && onLogout && (
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={onLogout}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="log-out-outline" size={16} color="#DC2626" />
-            <Text style={styles.logoutText}>Sair</Text>
-          </TouchableOpacity>
-        )}
       </View>
 
       <View style={styles.agencyAddressBar}>
-        <Ionicons name="location" size={13} color={theme.colors.primary} />
+        <LucideMapPin size={13} color={theme.colors.primary} />
         <Text style={styles.agencyAddressText} numberOfLines={1}>
           {AGENCY_CONFIG.address}
         </Text>
@@ -87,7 +75,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: theme.borderRadius.sm,
-    backgroundColor: theme.colors.primaryLight,
+    backgroundColor: '#F4F4F5',
+    borderWidth: 1,
+    borderColor: '#E4E4E7',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -104,22 +94,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: theme.colors.primary,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-  },
-  logoutText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#DC2626',
   },
   agencyAddressBar: {
     flexDirection: 'row',

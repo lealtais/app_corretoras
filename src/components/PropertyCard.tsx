@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Property } from '../types/property';
 import { theme } from '../constants/theme';
 import { AGENCY_CONFIG } from '../constants/agency';
+import { LucideMapPin, LucideHeart } from './LucideIcons';
 
 interface PropertyCardProps {
   property: Property;
@@ -81,10 +82,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             onPress={onToggleFavorite}
           >
-            <Ionicons
-              name={property.isFavorite ? 'heart' : 'heart-outline'}
+            <LucideHeart
               size={20}
               color={property.isFavorite ? theme.colors.favorite : theme.colors.textLight}
+              filled={property.isFavorite}
             />
           </TouchableOpacity>
         </View>
@@ -100,31 +101,27 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
         <View style={styles.specsRow}>
           {property.bedrooms > 0 && (
             <View style={styles.specChip}>
-              <Ionicons name="bed-outline" size={13} color={theme.colors.primary} />
               <Text style={styles.specText}>{property.bedrooms} quartos</Text>
             </View>
           )}
           <View style={styles.specChip}>
-            <Ionicons name="sunny-outline" size={13} color="#0284C7" />
             <Text style={[styles.specText, { color: '#0369A1', fontWeight: '700' }]}>
               {formatBeachDistance(property.beachDistance)}
             </Text>
           </View>
           <View style={styles.specChip}>
-            <Ionicons name="resize-outline" size={12} color={theme.colors.textSecondary} />
             <Text style={styles.specText}>{property.area} m²</Text>
           </View>
         </View>
 
         <View style={styles.locationRow}>
-          <Ionicons name="map-outline" size={12} color={theme.colors.textSecondary} />
+          <LucideMapPin size={12} color={theme.colors.textSecondary} />
           <Text style={styles.propertyLocation} numberOfLines={1}>
             Região: {property.location}
           </Text>
         </View>
 
         <View style={styles.agencyBox}>
-          <Ionicons name="business-outline" size={12} color={theme.colors.primary} />
           <Text style={styles.agencyText} numberOfLines={1}>
             Imobiliária: {property.agencyAddress || AGENCY_CONFIG.address}
           </Text>

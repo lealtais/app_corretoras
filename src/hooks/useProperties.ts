@@ -6,6 +6,10 @@ import {
   supabaseUpsertProperty,
   supabaseDeleteProperty,
 } from '../services/supabase';
+import {
+  loadCachedPropertiesAsync,
+  saveCachedPropertiesAsync,
+} from '../services/storage';
 
 export function useProperties(role: UserRole = 'client') {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -13,9 +17,14 @@ export function useProperties(role: UserRole = 'client') {
 
   const fetchProperties = useCallback(async () => {
     setIsLoading(true);
+    const cached = await loadCachedPropertiesAsync();
+    if (cached.length > 0) {
+      setProperties((prev) => (prev.length === 0 ? cached : prev));
+    }
     try {
       const list = await supabaseFetchProperties(role);
       setProperties(list);
+      saveCachedPropertiesAsync(list);
     } catch (err) {
       console.error('Erro ao buscar imóveis no Supabase:', err);
     } finally {
