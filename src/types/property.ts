@@ -1,12 +1,26 @@
+export type UserRole = 'admin' | 'client';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+export type AIImageMode = 'enhance' | 'furnish' | 'declutter';
+
 export interface Property {
   id: string;
+  code: string;
   name: string;
   type: 'Apartamento' | 'Casa' | 'Cobertura' | 'Terreno' | 'Outros';
   location: string;
-  area: number; // m²
-  price: number; // R$
-  condominium?: number; // R$
-  iptu?: number; // R$
+  agencyAddress: string;
+  beachDistance: number;
+  area: number;
+  price: number;
+  condominium?: number;
+  iptu?: number;
   bedrooms: number;
   bathrooms: number;
   parkingSpaces?: number;
@@ -15,6 +29,9 @@ export interface Property {
   isFavorite: boolean;
   status: 'Disponível' | 'Vendido' | 'Reservado';
   imageUrl: string;
+  originalImageUrl?: string;
+  aiEnhancedMode?: AIImageMode;
+  aiEnhancedLabel?: string;
 }
 
 export interface SearchFilter {
@@ -26,6 +43,7 @@ export interface SearchFilter {
   maxArea?: number;
   minPrice?: number;
   maxPrice?: number;
+  maxBeachDistance?: number;
   minCondominium?: number;
   maxCondominium?: number;
   minIptu?: number;
