@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Dimensions,
-  TouchableOpacity,
   Image,
   Animated,
 } from 'react-native';
@@ -120,30 +119,8 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     };
   }, [logoScale, logoOpacity, haloScale, haloOpacity, textOpacity, textTranslateY, progressScale, screenFadeOut, onFinish]);
 
-  const handleSkip = () => {
-    animate(1, 0, {
-      duration: 0.15,
-      ease: 'easeIn',
-      onUpdate: (latest) => {
-        screenFadeOut.setValue(latest);
-      },
-    }).then(() => {
-      onFinish();
-    });
-  };
-
   return (
     <Animated.View style={[styles.container, { opacity: screenFadeOut }]}>
-      <TouchableOpacity
-        style={styles.skipButton}
-        onPress={handleSkip}
-        activeOpacity={0.6}
-        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-      >
-        <Text style={styles.skipText}>Pular</Text>
-        <Ionicons name="chevron-forward" size={14} color={theme.colors.textLight} />
-      </TouchableOpacity>
-
       <View style={styles.centerContent}>
         <Animated.View
           style={[
@@ -221,23 +198,6 @@ const styles = StyleSheet.create({
     zIndex: 9999,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  skipButton: {
-    position: 'absolute',
-    top: 50,
-    right: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    backgroundColor: theme.colors.borderLight,
-  },
-  skipText: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-    marginRight: 2,
   },
   centerContent: {
     alignItems: 'center',
