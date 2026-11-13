@@ -124,7 +124,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           )}
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>E-mail</Text>
             <TextInput
               style={styles.input}
               placeholder="seuemail@seudominio.com"
@@ -137,7 +137,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>Senha</Text>
             <TextInput
               style={styles.input}
               placeholder={mode === 'login' ? 'Digite sua senha' : 'Crie uma senha'}
@@ -165,14 +165,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               {isLoading
                 ? 'Carregando...'
                 : mode === 'login'
-                ? 'Sign in'
-                : 'Sign up'}
+                ? 'Entrar'
+                : 'Criar conta'}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
+            <Text style={styles.dividerText}>ou</Text>
             <View style={styles.dividerLine} />
           </View>
 
@@ -213,7 +213,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
               }}
             >
               <Text style={styles.footerAction}>
-                {mode === 'login' ? 'Sign up' : 'Sign in'}
+                {mode === 'login' ? 'Cadastre-se' : 'Entrar'}
               </Text>
             </TouchableOpacity>
           </View>
