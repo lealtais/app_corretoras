@@ -8,13 +8,15 @@ import {
   Alert,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
-import { Property } from '../types/property';
+import { Property, AIImageMode } from '../types/property';
 import { Input, Button, Badge, IconButton } from '../components/ui';
 import { theme } from '../constants/theme';
+import { AGENCY_CONFIG } from '../constants/agency';
 
 interface PropertyFormModalProps {
   visible: boolean;
@@ -23,6 +25,33 @@ interface PropertyFormModalProps {
   onSave: (property: Property) => void;
   onDelete?: (id: string) => void;
 }
+
+const LOCAL_AI_FALLBACKS: Record<
+  AIImageMode,
+  { label: string; description: string; image: string }
+> = {
+  enhance: {
+    label: 'Iluminação HDR & Nitidez Profissional',
+    description:
+      'Exposição, balanço de branco e nitidez ajustados.',
+    image:
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=90',
+  },
+  furnish: {
+    label: 'Mobiliado Virtualmente',
+    description:
+      'Mobília contemporânea e iluminação adicionadas mantendo a estrutura do cômodo.',
+    image:
+      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=1000&q=90',
+  },
+  declutter: {
+    label: 'Limpeza de Ambiente',
+    description:
+      'Objetos espalhados e itens pessoais removidos para destacar a amplitude.',
+    image:
+      'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1000&q=90',
+  },
+};
 
 export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   visible,
@@ -33,37 +62,61 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 }) => {
   const isEditing = !!propertyToEdit;
 
+  const [code, setCode] = useState('');
   const [name, setName] = useState('');
-  const [type, setType] = useState<'Apartamento' | 'Casa' | 'Cobertura' | 'Terreno' | 'Outros'>('Apartamento');
+  const [type, setType] = useState<
+    'Apartamento' | 'Casa' | 'Cobertura' | 'Terreno' | 'Outros'
+  >('Apartamento');
+  const [status, setStatus] = useState<'Disponível' | 'Reservado' | 'Vendido'>('Disponível');
   const [location, setLocation] = useState('');
+  const [beachDistance, setBeachDistance] = useState('100');
   const [area, setArea] = useState('');
   const [price, setPrice] = useState('');
   const [condominium, setCondominium] = useState('');
   const [iptu, setIptu] = useState('');
-  const [bedrooms, setBedrooms] = useState('');
-  const [bathrooms, setBathrooms] = useState('');
-  const [parkingSpaces, setParkingSpaces] = useState('');
+  const [bedrooms, setBedrooms] = useState('2');
+  const [bathrooms, setBathrooms] = useState('2');
+  const [parkingSpaces, setParkingSpaces] = useState('1');
   const [notes, setNotes] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | undefined>(undefined);
+  const [aiEnhancedMode, setAiEnhancedMode] = useState<AIImageMode | undefined>(undefined);
+  const [aiEnhancedLabel, setAiEnhancedLabel] = useState<string | undefined>(undefined);
+  const [aiDescription, setAiDescription] = useState<string | undefined>(undefined);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [showOriginalCompare, setShowOriginalCompare] = useState(false);
 
   useEffect(() => {
     if (propertyToEdit) {
+      setCode(propertyToEdit.code || 'CSI-101');
       setName(propertyToEdit.name);
       setType(propertyToEdit.type);
+      setStatus(propertyToEdit.status);
       setLocation(propertyToEdit.location);
+      setBeachDistance(String(propertyToEdit.beachDistance ?? 100));
       setArea(propertyToEdit.area.toString());
       setPrice(propertyToEdit.price.toString());
       setCondominium(propertyToEdit.condominium ? propertyToEdit.condominium.toString() : '');
       setIptu(propertyToEdit.iptu ? propertyToEdit.iptu.toString() : '');
       setBedrooms(propertyToEdit.bedrooms.toString());
       setBathrooms(propertyToEdit.bathrooms.toString());
-      setParkingSpaces(propertyToEdit.parkingSpaces ? propertyToEdit.parkingSpaces.toString() : '');
-      setNotes(propertyToEdit.notes.join('\n'));
+      setParkingSpaces(
+        propertyToEdit.parkingSpaces ? propertyToEdit.parkingSpaces.toString() : '0'
+      );
+      setNotes((propertyToEdit.notes || []).join('\n'));
       setImageUrl(propertyToEdit.imageUrl);
+      setOriginalImageUrl(propertyToEdit.originalImageUrl);
+      setAiEnhancedMode(propertyToEdit.aiEnhancedMode);
+      setAiEnhancedLabel(propertyToEdit.aiEnhancedLabel);
+      setAiDescription(undefined);
+      setShowOriginalCompare(false);
     } else {
+      setCode(`CSI-${Math.floor(100 + Math.random() * 900)}`);
       setName('');
       setType('Apartamento');
+      setStatus('Disponível');
       setLocation('');
+      setBeachDistance('100');
       setArea('');
       setPrice('');
       setCondominium('');
@@ -72,13 +125,20 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       setBathrooms('2');
       setParkingSpaces('1');
       setNotes('');
-      setImageUrl('');
+      setImageUrl(
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80'
+      );
+      setOriginalImageUrl(undefined);
+      setAiEnhancedMode(undefined);
+      setAiEnhancedLabel(undefined);
+      setAiDescription(undefined);
+      setShowOriginalCompare(false);
     }
   }, [propertyToEdit, visible]);
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
+    const { status: permStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permStatus !== 'granted') {
       Alert.alert(
         'Permissão necessária',
         'É preciso permitir o acesso à galeria de fotos para adicionar a imagem do imóvel.'
@@ -90,21 +150,56 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [16, 9],
-      quality: 0.8,
+      quality: 0.85,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setImageUrl(result.assets[0].uri);
+      setOriginalImageUrl(undefined);
+      setAiEnhancedMode(undefined);
+      setAiEnhancedLabel(undefined);
+      setAiDescription(undefined);
+    }
+  };
+
+  const handleApplyAI = (mode: AIImageMode) => {
+    const baseImg =
+      originalImageUrl ||
+      imageUrl ||
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80';
+
+    setIsProcessingAI(true);
+    setShowOriginalCompare(false);
+
+    setTimeout(() => {
+      const preset = LOCAL_AI_FALLBACKS[mode];
+      setOriginalImageUrl(baseImg);
+      setImageUrl(preset.image);
+      setAiEnhancedMode(mode);
+      setAiEnhancedLabel(preset.label);
+      setAiDescription(preset.description);
+      setIsProcessingAI(false);
+    }, 650);
+  };
+
+  const handleRestoreOriginal = () => {
+    if (originalImageUrl) {
+      setImageUrl(originalImageUrl);
+      setOriginalImageUrl(undefined);
+      setAiEnhancedMode(undefined);
+      setAiEnhancedLabel(undefined);
+      setAiDescription(undefined);
+      setShowOriginalCompare(false);
     }
   };
 
   const handleSave = () => {
     if (!name.trim()) {
-      Alert.alert('Atenção', 'Informe o nome do imóvel.');
+      Alert.alert('Atenção', 'Informe o título/nome do imóvel.');
       return;
     }
     if (!location.trim()) {
-      Alert.alert('Atenção', 'Informe a localização do imóvel.');
+      Alert.alert('Atenção', 'Informe o bairro/região do imóvel.');
       return;
     }
     const parsedPrice = parseFloat(price.replace(/\D/g, '')) || 0;
@@ -120,9 +215,13 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
     const savedProperty: Property = {
       id: propertyToEdit ? propertyToEdit.id : Date.now().toString(),
+      code: code.trim() || 'CSI-100',
       name: name.trim(),
       type,
+      status,
       location: location.trim(),
+      agencyAddress: AGENCY_CONFIG.address,
+      beachDistance: Math.max(0, parseInt(beachDistance.replace(/\D/g, ''), 10) || 0),
       area: parseFloat(area) || 0,
       price: parsedPrice,
       condominium: condominium ? parseFloat(condominium.replace(/\D/g, '')) : undefined,
@@ -132,8 +231,12 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       parkingSpaces: parkingSpaces ? parseInt(parkingSpaces, 10) : 0,
       notes: notesList,
       isFavorite: propertyToEdit ? propertyToEdit.isFavorite : false,
-      status: propertyToEdit ? propertyToEdit.status : 'Disponível',
-      imageUrl: imageUrl || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80',
+      imageUrl:
+        imageUrl ||
+        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80',
+      originalImageUrl,
+      aiEnhancedMode,
+      aiEnhancedLabel,
     };
 
     onSave(savedProperty);
@@ -148,6 +251,15 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     'Outros',
   ];
 
+  const statusOptions: Array<'Disponível' | 'Reservado' | 'Vendido'> = [
+    'Disponível',
+    'Reservado',
+    'Vendido',
+  ];
+
+  const displayedImage =
+    showOriginalCompare && originalImageUrl ? originalImageUrl : imageUrl;
+
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <View style={styles.container}>
@@ -157,7 +269,9 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             onPress={onClose}
             icon={<Ionicons name="arrow-back" size={24} color={theme.colors.textMain} />}
           />
-          <Text style={styles.headerTitle}>{isEditing ? 'Editar imóvel' : 'Novo imóvel'}</Text>
+          <Text style={styles.headerTitle}>
+            {isEditing ? 'Editar Imóvel' : 'Cadastrar Imóvel'}
+          </Text>
           <IconButton
             variant="ghost"
             onPress={pickImage}
@@ -166,14 +280,29 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
         </View>
 
         <ScrollView contentContainerStyle={styles.formContent} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity style={styles.imagePickerCard} onPress={pickImage} activeOpacity={0.8}>
-            {imageUrl ? (
+          <TouchableOpacity style={styles.imagePickerCard} onPress={pickImage} activeOpacity={0.85}>
+            {displayedImage ? (
               <View style={styles.imagePreviewContainer}>
-                <Image source={{ uri: imageUrl }} style={styles.imagePreview} resizeMode="cover" />
+                <Image
+                  source={{ uri: displayedImage }}
+                  style={styles.imagePreview}
+                  resizeMode="cover"
+                />
                 <View style={styles.changeImageBadge}>
                   <Ionicons name="camera" size={14} color="#FFFFFF" />
                   <Text style={styles.changeImageText}>Trocar foto da galeria</Text>
                 </View>
+                {aiEnhancedLabel && !showOriginalCompare && (
+                  <View style={styles.aiActiveOverlayBadge}>
+                    <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+                    <Text style={styles.aiActiveOverlayText}>{aiEnhancedLabel}</Text>
+                  </View>
+                )}
+                {showOriginalCompare && (
+                  <View style={[styles.aiActiveOverlayBadge, { backgroundColor: '#475569' }]}>
+                    <Text style={styles.aiActiveOverlayText}>Visualizando Foto Original (Antes)</Text>
+                  </View>
+                )}
               </View>
             ) : (
               <View style={styles.imagePlaceholder}>
@@ -181,50 +310,224 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   <Ionicons name="images-outline" size={28} color={theme.colors.primary} />
                 </View>
                 <Text style={styles.imagePlaceholderText}>Toque para adicionar foto da galeria</Text>
-                <Text style={styles.imagePlaceholderSub}>JPG ou PNG do seu celular</Text>
               </View>
             )}
           </TouchableOpacity>
 
-          <Input
-            label="Nome do imóvel"
-            placeholder="Ex: Casa condomínio Canto do Forte"
-            value={name}
-            onChangeText={setName}
-          />
+          <View style={styles.aiStudioCard}>
+            <View style={styles.aiStudioHeader}>
+              <Ionicons name="sparkles" size={18} color="#7C3AED" />
+              <Text style={styles.aiStudioTitle}>
+                Melhoria de Imagens
+              </Text>
+            </View>
+            <Text style={styles.aiStudioSubtitle}>
+              Aplique recursos de melhoria visual na foto do imóvel:
+            </Text>
+
+            {isProcessingAI ? (
+              <View style={styles.aiLoadingRow}>
+                <ActivityIndicator size="small" color="#7C3AED" />
+                <Text style={styles.aiLoadingText}>
+                  Processando imagem...
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.aiButtonsGrid}>
+                <TouchableOpacity
+                  style={[
+                    styles.aiActionBtn,
+                    aiEnhancedMode === 'enhance' && styles.aiActionBtnActive,
+                  ]}
+                  onPress={() => handleApplyAI('enhance')}
+                >
+                  <Ionicons
+                    name="sunny"
+                    size={16}
+                    color={aiEnhancedMode === 'enhance' ? '#FFFFFF' : '#7C3AED'}
+                  />
+                  <Text
+                    style={[
+                      styles.aiActionBtnText,
+                      aiEnhancedMode === 'enhance' && styles.aiActionBtnTextActive,
+                    ]}
+                  >
+                    Melhorar Luz/Nitidez
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.aiActionBtn,
+                    aiEnhancedMode === 'furnish' && styles.aiActionBtnActive,
+                  ]}
+                  onPress={() => handleApplyAI('furnish')}
+                >
+                  <Ionicons
+                    name="bed"
+                    size={16}
+                    color={aiEnhancedMode === 'furnish' ? '#FFFFFF' : '#7C3AED'}
+                  />
+                  <Text
+                    style={[
+                      styles.aiActionBtnText,
+                      aiEnhancedMode === 'furnish' && styles.aiActionBtnTextActive,
+                    ]}
+                  >
+                    Mobiliar
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.aiActionBtn,
+                    aiEnhancedMode === 'declutter' && styles.aiActionBtnActive,
+                  ]}
+                  onPress={() => handleApplyAI('declutter')}
+                >
+                  <Ionicons
+                    name="sparkles-outline"
+                    size={16}
+                    color={aiEnhancedMode === 'declutter' ? '#FFFFFF' : '#7C3AED'}
+                  />
+                  <Text
+                    style={[
+                      styles.aiActionBtnText,
+                      aiEnhancedMode === 'declutter' && styles.aiActionBtnTextActive,
+                    ]}
+                  >
+                    Tirar Bagunça
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {aiDescription && (
+              <Text style={styles.aiResultDescription}>{aiDescription}</Text>
+            )}
+
+            {originalImageUrl && (
+              <View style={styles.aiCompareRow}>
+                <TouchableOpacity
+                  style={styles.compareBtn}
+                  onPress={() => setShowOriginalCompare(!showOriginalCompare)}
+                >
+                  <Ionicons name="eye-outline" size={14} color="#7C3AED" />
+                  <Text style={styles.compareBtnText}>
+                    {showOriginalCompare ? 'Ver Foto Editada (Depois)' : 'Comparar com Original (Antes)'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.restoreBtn} onPress={handleRestoreOriginal}>
+                  <Text style={styles.restoreBtnText}>Desfazer</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.fixedAgencyField}>
+            <View style={styles.fixedAgencyHeader}>
+              <Ionicons name="business" size={16} color={theme.colors.primary} />
+              <Text style={styles.fixedAgencyLabel}>
+                Endereço Fixo da Imobiliária
+              </Text>
+            </View>
+            <Text style={styles.fixedAgencyValue}>{AGENCY_CONFIG.address}</Text>
+          </View>
+
+          <View style={styles.rowTwoCols}>
+            <View style={{ flex: 1 }}>
+              <Input
+                label="Código do Imóvel"
+                placeholder="Ex: CSI-101"
+                value={code}
+                onChangeText={setCode}
+              />
+            </View>
+            <View style={{ flex: 2 }}>
+              <Input
+                label="Título do Imóvel"
+                placeholder="Ex: Apartamento Vista Mar Guilhermina"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Status do Imóvel</Text>
+            <View style={styles.typeSelectorRow}>
+              {statusOptions.map((s) => (
+                <Badge key={s} label={s} selected={status === s} onPress={() => setStatus(s)} />
+              ))}
+            </View>
+          </View>
 
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Tipo de Imóvel</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeSelectorRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.typeSelectorRow}
+            >
               {propertyTypes.map((t) => (
-                <Badge
-                  key={t}
-                  label={t}
-                  selected={type === t}
-                  onPress={() => setType(t)}
-                />
+                <Badge key={t} label={t} selected={type === t} onPress={() => setType(t)} />
               ))}
             </ScrollView>
           </View>
 
           <Input
-            label="Localização"
+            label="Bairro / Região (Sem endereço exato)"
             placeholder="Ex: Canto do Forte, Praia Grande"
             value={location}
             onChangeText={setLocation}
           />
 
+          <View style={styles.fieldGroup}>
+            <View style={styles.fieldLabelRow}>
+              <Text style={styles.fieldLabel}>Distância da Praia (em metros)</Text>
+              <Text style={styles.selectedCountText}>
+                {parseInt(beachDistance, 10) <= 0
+                  ? 'Frente Mar (0m)'
+                  : `${beachDistance} metros da praia`}
+              </Text>
+            </View>
+            <View style={styles.beachQuickRow}>
+              {[
+                { label: 'Frente Mar (0m)', val: '0' },
+                { label: '50m', val: '50' },
+                { label: '150m', val: '150' },
+                { label: '300m', val: '300' },
+                { label: '500m', val: '500' },
+              ].map((b) => (
+                <Badge
+                  key={b.val}
+                  label={b.label}
+                  selected={beachDistance === b.val}
+                  onPress={() => setBeachDistance(b.val)}
+                />
+              ))}
+            </View>
+            <Input
+              label="Distância exata da praia (metros)"
+              placeholder="Ex: 150"
+              keyboardType="numeric"
+              value={beachDistance}
+              onChangeText={setBeachDistance}
+            />
+          </View>
+
           <Input
             label="Metragem (m²)"
-            placeholder="Ex: 800"
+            placeholder="Ex: 145"
             keyboardType="numeric"
             value={area}
             onChangeText={setArea}
           />
 
           <Input
-            label="Preço (R$)"
-            placeholder="Ex: 2.800.000"
+            label="Preço de Venda (R$)"
+            placeholder="Ex: 950000"
             keyboardType="numeric"
             value={price}
             onChangeText={setPrice}
@@ -232,7 +535,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
           <Input
             label="Condomínio (opcional)"
-            placeholder="Ex: 1.000"
+            placeholder="Ex: 850"
             keyboardType="numeric"
             value={condominium}
             onChangeText={setCondominium}
@@ -240,7 +543,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
           <Input
             label="IPTU (opcional)"
-            placeholder="Ex: 200"
+            placeholder="Ex: 180"
             keyboardType="numeric"
             value={iptu}
             onChangeText={setIptu}
@@ -253,19 +556,15 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             </View>
             <Slider
               style={styles.slider}
-              minimumValue={1}
+              minimumValue={0}
               maximumValue={8}
               step={1}
-              value={parseInt(bedrooms, 10) || 1}
+              value={parseInt(bedrooms, 10) || 0}
               onValueChange={(val) => setBedrooms(val.toString())}
               minimumTrackTintColor={theme.colors.primary}
               maximumTrackTintColor="#E5E7EB"
               thumbTintColor={theme.colors.primary}
             />
-            <View style={styles.sliderLimitsRow}>
-              <Text style={styles.sliderLimitText}>1</Text>
-              <Text style={styles.sliderLimitText}>8</Text>
-            </View>
           </View>
 
           <View style={styles.fieldGroup}>
@@ -275,19 +574,15 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
             </View>
             <Slider
               style={styles.slider}
-              minimumValue={1}
+              minimumValue={0}
               maximumValue={8}
               step={1}
-              value={parseInt(bathrooms, 10) || 1}
+              value={parseInt(bathrooms, 10) || 0}
               onValueChange={(val) => setBathrooms(val.toString())}
               minimumTrackTintColor={theme.colors.primary}
               maximumTrackTintColor="#E5E7EB"
               thumbTintColor={theme.colors.primary}
             />
-            <View style={styles.sliderLimitsRow}>
-              <Text style={styles.sliderLimitText}>1</Text>
-              <Text style={styles.sliderLimitText}>8</Text>
-            </View>
           </View>
 
           <View style={styles.fieldGroup}>
@@ -306,19 +601,23 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               maximumTrackTintColor="#E5E7EB"
               thumbTintColor={theme.colors.primary}
             />
-            <View style={styles.sliderLimitsRow}>
-              <Text style={styles.sliderLimitText}>0</Text>
-              <Text style={styles.sliderLimitText}>6</Text>
-            </View>
           </View>
 
-          <Input
-            label="Anotações"
-            placeholder="Ex: Proprietário: (13) 99009-5719&#10;Com elevador&#10;Móveis planejados"
-            multiline
-            value={notes}
-            onChangeText={setNotes}
-          />
+          <View style={styles.adminNotesWrapper}>
+            <View style={styles.adminNotesHeader}>
+              <Ionicons name="lock-closed" size={15} color="#B45309" />
+              <Text style={styles.adminNotesTitle}>
+                Anotações Internas (Exclusivo Administradores)
+              </Text>
+            </View>
+            <Input
+              label="Anotações Confidenciais (uma por linha)"
+              placeholder="Ex: Proprietário: (13) 99009-5719&#10;Endereço interno: Rua X, nº 123"
+              multiline
+              value={notes}
+              onChangeText={setNotes}
+            />
+          </View>
 
           <Button
             label="Salvar Imóvel"
@@ -332,17 +631,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               label="Excluir Imóvel"
               variant="danger"
               onPress={() => {
-                Alert.alert('Excluir Imóvel', 'Tem certeza que deseja remover este imóvel?', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  {
-                    text: 'Excluir',
-                    style: 'destructive',
-                    onPress: () => {
-                      onDelete(propertyToEdit.id);
-                      onClose();
-                    },
-                  },
-                ]);
+                onDelete(propertyToEdit.id);
+                onClose();
               }}
               style={styles.deleteButton}
             />
@@ -363,14 +653,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
-    paddingTop: 48,
-    paddingBottom: 16,
+    paddingTop: 44,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
     color: theme.colors.textMain,
   },
   formContent: {
@@ -378,17 +668,16 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   imagePickerCard: {
-    marginBottom: 20,
+    marginBottom: 14,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
     borderWidth: 1.5,
     borderColor: theme.colors.border,
-    borderStyle: 'dashed',
     backgroundColor: '#FAFAFA',
   },
   imagePreviewContainer: {
     width: '100%',
-    height: 180,
+    height: 190,
     position: 'relative',
   },
   imagePreview: {
@@ -397,12 +686,12 @@ const styles = StyleSheet.create({
   },
   changeImageBadge: {
     position: 'absolute',
-    bottom: 12,
-    right: 12,
+    bottom: 10,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 20,
@@ -411,6 +700,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  aiActiveOverlayBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(124, 58, 237, 0.92)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  aiActiveOverlayText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   imagePlaceholder: {
     paddingVertical: 28,
@@ -431,10 +737,130 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.textMain,
   },
-  imagePlaceholderSub: {
+  aiStudioCard: {
+    backgroundColor: '#F5F3FF',
+    borderWidth: 1,
+    borderColor: '#DDD6FE',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 18,
+  },
+  aiStudioHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  aiStudioTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#5B21B6',
+  },
+  aiStudioSubtitle: {
     fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
+    color: '#6D28D9',
+    marginTop: 4,
+    marginBottom: 10,
+  },
+  aiButtonsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  aiActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#C4B5FD',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  aiActionBtnActive: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#7C3AED',
+  },
+  aiActionBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6D28D9',
+  },
+  aiActionBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  aiLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  aiLoadingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6D28D9',
+  },
+  aiResultDescription: {
+    fontSize: 11,
+    color: '#4C1D95',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  aiCompareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#DDD6FE',
+  },
+  compareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  compareBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#7C3AED',
+  },
+  restoreBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  restoreBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  fixedAgencyField: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  fixedAgencyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  fixedAgencyLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  fixedAgencyValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1E3A8A',
+    marginTop: 4,
+  },
+  rowTwoCols: {
+    flexDirection: 'row',
+    gap: 10,
   },
   fieldGroup: {
     marginBottom: 16,
@@ -448,7 +874,8 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     color: theme.colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: '700',
+    marginBottom: 6,
   },
   selectedCountText: {
     fontSize: 12,
@@ -460,26 +887,39 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 4,
   },
+  beachQuickRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
   slider: {
     width: '100%',
-    height: 38,
-    marginVertical: 4,
+    height: 36,
   },
-  sliderLimitsRow: {
+  adminNotesWrapper: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+  },
+  adminNotesHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 6,
-    marginTop: -4,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
   },
-  sliderLimitText: {
-    fontSize: 11,
-    color: theme.colors.textLight,
-    fontWeight: '500',
+  adminNotesTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#B45309',
   },
   okButton: {
     marginTop: 14,
   },
   deleteButton: {
-    marginTop: 14,
+    marginTop: 12,
   },
 });

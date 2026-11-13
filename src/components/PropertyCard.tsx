@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Property } from '../types/property';
 import { theme } from '../constants/theme';
+import { AGENCY_CONFIG } from '../constants/agency';
 
 interface PropertyCardProps {
   property: Property;
@@ -14,27 +15,67 @@ export const formatCurrency = (val: number): string => {
   return 'R$ ' + val.toLocaleString('pt-BR');
 };
 
+export const formatBeachDistance = (meters?: number): string => {
+  if (meters === undefined || meters <= 0) {
+    return 'Frente mar (0m)';
+  }
+  if (meters >= 1000) {
+    return `${(meters / 1000).toFixed(1)} km da praia`;
+  }
+  return `${meters}m da praia`;
+};
+
+export const buildWhatsAppMessage = (property: Property): string => {
+  const codePart = property.code ? `[${property.code}] ` : '';
+  return `Olá! Vi no app ${AGENCY_CONFIG.name} o imóvel ${codePart}${property.name} (${property.type} • ${formatCurrency(property.price)} • ${formatBeachDistance(property.beachDistance)} • Região: ${property.location}) e gostaria de mais informações!`;
+};
+
+export const openExternalWhatsApp = (property: Property) => {
+  const text = encodeURIComponent(buildWhatsAppMessage(property));
+  const url = `https://wa.me/${AGENCY_CONFIG.whatsappNumber}?text=${text}`;
+  Linking.openURL(url);
+};
+
 export const PropertyCard: React.FC<PropertyCardProps> = ({
   property,
   onPress,
   onToggleFavorite,
 }) => {
+  const isAvailable = property.status === 'Disponível';
+
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={onPress}
-      activeOpacity={0.85}
+      activeOpacity={0.88}
     >
-      <Image
-        source={{ uri: property.imageUrl }}
-        style={styles.thumbnail}
-        resizeMode="cover"
-      />
+      <View style={styles.imageSection}>
+        <Image
+          source={{ uri: property.imageUrl }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+        />
+        <View
+          style={[
+            styles.statusBadge,
+            isAvailable ? styles.statusAvailable : styles.statusReserved,
+          ]}
+        >
+          <Text style={styles.statusText}>Imóvel {property.status}</Text>
+        </View>
+        {property.aiEnhancedLabel && (
+          <View style={styles.aiBadge}>
+            <Ionicons name="sparkles" size={10} color="#FFFFFF" />
+            <Text style={styles.aiBadgeText}>Foto IA</Text>
+          </View>
+        )}
+      </View>
 
       <View style={styles.infoContainer}>
         <View style={styles.topRow}>
-          <Text style={styles.propertyName} numberOfLines={1}>
-            {property.name}
+          <Text style={styles.typeAndCode}>
+            {property.code ? `${property.code} • ` : ''}
+            {property.type}
           </Text>
           <TouchableOpacity
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -48,15 +89,55 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.propertyType}>{property.type}</Text>
-        <Text style={styles.propertyLocation} numberOfLines={1}>
-          {property.location}
+        <Text style={styles.propertyName} numberOfLines={1}>
+          {property.name}
         </Text>
-        <Text style={styles.propertyArea}>{property.area} m²</Text>
 
         <Text style={styles.propertyPrice}>
           {formatCurrency(property.price)}
         </Text>
+
+        <View style={styles.specsRow}>
+          {property.bedrooms > 0 && (
+            <View style={styles.specChip}>
+              <Ionicons name="bed-outline" size={13} color={theme.colors.primary} />
+              <Text style={styles.specText}>{property.bedrooms} quartos</Text>
+            </View>
+          )}
+          <View style={styles.specChip}>
+            <Ionicons name="sunny-outline" size={13} color="#0284C7" />
+            <Text style={[styles.specText, { color: '#0369A1', fontWeight: '700' }]}>
+              {formatBeachDistance(property.beachDistance)}
+            </Text>
+          </View>
+          <View style={styles.specChip}>
+            <Ionicons name="resize-outline" size={12} color={theme.colors.textSecondary} />
+            <Text style={styles.specText}>{property.area} m²</Text>
+          </View>
+        </View>
+
+        <View style={styles.locationRow}>
+          <Ionicons name="map-outline" size={12} color={theme.colors.textSecondary} />
+          <Text style={styles.propertyLocation} numberOfLines={1}>
+            Região: {property.location}
+          </Text>
+        </View>
+
+        <View style={styles.agencyBox}>
+          <Ionicons name="business-outline" size={12} color={theme.colors.primary} />
+          <Text style={styles.agencyText} numberOfLines={1}>
+            Imobiliária: {property.agencyAddress || AGENCY_CONFIG.address}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.whatsappBtn}
+          onPress={() => openExternalWhatsApp(property)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="logo-whatsapp" size={15} color="#FFFFFF" />
+          <Text style={styles.whatsappBtnText}>Tenho Interesse (Chamar no WhatsApp)</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -68,54 +149,142 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    flexDirection: 'row',
     marginBottom: theme.spacing.md,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    elevation: 2,
+  },
+  imageSection: {
+    width: '100%',
+    height: 170,
+    backgroundColor: '#E5E7EB',
+    position: 'relative',
   },
   thumbnail: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#E5E7EB',
+    width: '100%',
+    height: '100%',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusAvailable: {
+    backgroundColor: '#16A34A',
+  },
+  statusReserved: {
+    backgroundColor: '#D97706',
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  aiBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(124, 58, 237, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  aiBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
   infoContainer: {
-    flex: 1,
-    padding: theme.spacing.sm + 2,
-    justifyContent: 'space-between',
+    padding: 12,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  propertyName: {
-    fontSize: 14,
+  typeAndCode: {
+    fontSize: 11,
     fontWeight: '700',
-    color: theme.colors.textMain,
-    flex: 1,
-    marginRight: 6,
+    color: theme.colors.primary,
+    textTransform: 'uppercase',
   },
-  propertyType: {
-    fontSize: 12,
-    color: theme.colors.textSecondary,
-    marginTop: 1,
+  propertyName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: theme.colors.textMain,
+    marginTop: 2,
+  },
+  propertyPrice: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 4,
+  },
+  specsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  specChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  specText: {
+    fontSize: 11,
+    color: theme.colors.textMain,
+    fontWeight: '600',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
   },
   propertyLocation: {
     fontSize: 12,
     color: theme.colors.textSecondary,
+    flex: 1,
   },
-  propertyArea: {
+  agencyBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 6,
+    backgroundColor: theme.colors.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+  },
+  agencyText: {
     fontSize: 11,
-    color: theme.colors.textLight,
+    color: theme.colors.primary,
+    fontWeight: '700',
+    flex: 1,
   },
-  propertyPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: theme.colors.textMain,
-    marginTop: 2,
+  whatsappBtn: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#16A34A',
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
+  whatsappBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

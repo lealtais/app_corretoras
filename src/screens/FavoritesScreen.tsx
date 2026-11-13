@@ -1,13 +1,15 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Property } from '../types/property';
+import { Property, User } from '../types/property';
 import { PropertyCard } from '../components/PropertyCard';
 import { Header } from '../components/Header';
 import { theme } from '../constants/theme';
 
 interface FavoritesScreenProps {
   properties: Property[];
+  currentUser: User;
+  onLogout: () => void;
   onSelectProperty: (property: Property) => void;
   onToggleFavorite: (id: string) => void;
   onPressHome: () => void;
@@ -15,6 +17,8 @@ interface FavoritesScreenProps {
 
 export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
   properties,
+  currentUser,
+  onLogout,
   onSelectProperty,
   onToggleFavorite,
   onPressHome,
@@ -23,7 +27,12 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <Header title="Favoritos" onPressHome={onPressHome} />
+      <Header
+        title="Meus Imóveis Favoritos"
+        onPressHome={onPressHome}
+        currentUser={currentUser}
+        onLogout={onLogout}
+      />
 
       <FlatList
         data={favoriteProperties}

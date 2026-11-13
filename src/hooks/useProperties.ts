@@ -1,22 +1,61 @@
-import { useState } from 'react';
-import { Property } from '../types/property';
-import { initialProperties } from '../data/initialProperties';
+import { useState, useEffect, useCallback } from 'react';
+import { Property, UserRole } from '../types/property';
+import { AGENCY_CONFIG } from '../constants/agency';
+import {
+  supabaseFetchProperties,
+  supabaseUpsertProperty,
+  supabaseDeleteProperty,
+} from '../services/supabase';
 
-export function useProperties() {
-  const [properties, setProperties] = useState<Property[]>(initialProperties);
+export function useProperties(role: UserRole = 'client') {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const saveProperty = (property: Property) => {
+  const fetchProperties = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const list = await supabaseFetchProperties(role);
+      setProperties(list);
+    } catch (err) {
+      console.error('Erro ao buscar imóveis no Supabase:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [role]);
+
+  useEffect(() => {
+    fetchProperties();
+  }, [fetchProperties]);
+
+  const saveProperty = async (property: Property) => {
+    const normalized: Property = {
+      ...property,
+      agencyAddress: AGENCY_CONFIG.address,
+      code: property.code || `CSI-${100 + properties.length + 1}`,
+    };
+
     setProperties((prev) => {
-      const exists = prev.some((p) => p.id === property.id);
+      const exists = prev.some((p) => p.id === normalized.id);
       if (exists) {
-        return prev.map((p) => (p.id === property.id ? property : p));
+        return prev.map((p) => (p.id === normalized.id ? normalized : p));
       }
-      return [property, ...prev];
+      return [normalized, ...prev];
     });
+
+    try {
+      await supabaseUpsertProperty(normalized);
+    } catch (err) {
+      console.error('Erro ao salvar imóvel no Supabase:', err);
+    }
   };
 
-  const deleteProperty = (id: string) => {
+  const deleteProperty = async (id: string) => {
     setProperties((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await supabaseDeleteProperty(id);
+    } catch (err) {
+      console.error('Erro ao excluir imóvel no Supabase:', err);
+    }
   };
 
   return {
@@ -24,5 +63,7 @@ export function useProperties() {
     setProperties,
     saveProperty,
     deleteProperty,
+    isLoading,
+    refreshProperties: fetchProperties,
   };
 }

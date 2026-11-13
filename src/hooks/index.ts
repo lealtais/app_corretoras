@@ -1,4 +1,3 @@
-export * from './useProperties';
-export * from './useFavorites';
-export * from './usePropertyFilters';
-export * from './usePropertyStatistics';
+export { useProperties } from './useProperties';
+export { useFavorites } from './useFavorites';
+export { usePropertyFilters } from './usePropertyFilters';
