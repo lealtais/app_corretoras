@@ -364,7 +364,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
           <View style={styles.aiStudioCard}>
             <View style={styles.aiStudioHeader}>
-              <Ionicons name="sparkles" size={18} color="#7C3AED" />
+              <Ionicons name="sparkles" size={18} color="#EA580C" />
               <Text style={styles.aiStudioTitle}>
                 Melhoria de Imagens
               </Text>
@@ -375,7 +375,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
 
             {isProcessingAI ? (
               <View style={styles.aiLoadingRow}>
-                <ActivityIndicator size="small" color="#7C3AED" />
+                <ActivityIndicator size="small" color="#EA580C" />
                 <Text style={styles.aiLoadingText}>
                   Processando imagem...
                 </Text>
@@ -392,7 +392,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   <Ionicons
                     name="sunny"
                     size={16}
-                    color={aiEnhancedMode === 'enhance' ? '#FFFFFF' : '#7C3AED'}
+                    color={aiEnhancedMode === 'enhance' ? '#FFFFFF' : '#EA580C'}
                   />
                   <Text
                     style={[
@@ -414,7 +414,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   <Ionicons
                     name="bed"
                     size={16}
-                    color={aiEnhancedMode === 'furnish' ? '#FFFFFF' : '#7C3AED'}
+                    color={aiEnhancedMode === 'furnish' ? '#FFFFFF' : '#EA580C'}
                   />
                   <Text
                     style={[
@@ -436,7 +436,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   <Ionicons
                     name="sparkles-outline"
                     size={16}
-                    color={aiEnhancedMode === 'declutter' ? '#FFFFFF' : '#7C3AED'}
+                    color={aiEnhancedMode === 'declutter' ? '#FFFFFF' : '#EA580C'}
                   />
                   <Text
                     style={[
@@ -805,9 +805,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textMain,
   },
   aiStudioCard: {
-    backgroundColor: '#F5F3FF',
+    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#DDD6FE',
+    borderColor: '#FED7AA',
     borderRadius: 12,
     padding: 14,
     marginBottom: 18,
@@ -820,11 +820,11 @@ const styles = StyleSheet.create({
   aiStudioTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#5B21B6',
+    color: '#9A3412',
   },
   aiStudioSubtitle: {
     fontSize: 12,
-    color: '#6D28D9',
+    color: '#C2410C',
     marginTop: 4,
     marginBottom: 10,
   },
@@ -839,19 +839,19 @@ const styles = StyleSheet.create({
     gap: 5,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#C4B5FD',
+    borderColor: '#FED7AA',
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 8,
   },
   aiActionBtnActive: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    backgroundColor: '#EA580C',
+    borderColor: '#EA580C',
   },
   aiActionBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6D28D9',
+    color: '#EA580C',
   },
   aiActionBtnTextActive: {
     color: '#FFFFFF',
@@ -865,11 +865,11 @@ const styles = StyleSheet.create({
   aiLoadingText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6D28D9',
+    color: '#EA580C',
   },
   aiResultDescription: {
     fontSize: 11,
-    color: '#4C1D95',
+    color: '#9A3412',
     marginTop: 8,
     fontStyle: 'italic',
   },
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#DDD6FE',
+    borderTopColor: '#FED7AA',
   },
   compareBtn: {
     flexDirection: 'row',
@@ -890,7 +890,7 @@ const styles = StyleSheet.create({
   compareBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#7C3AED',
+    color: '#EA580C',
   },
   restoreBtn: {
     paddingHorizontal: 8,
@@ -902,9 +902,9 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   fixedAgencyField: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#FFF7ED',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: '#FED7AA',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
@@ -917,12 +917,12 @@ const styles = StyleSheet.create({
   fixedAgencyLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: '#C2410C',
   },
   fixedAgencyValue: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#1E3A8A',
+    color: '#7C2D12',
     marginTop: 4,
   },
   rowTwoCols: {
