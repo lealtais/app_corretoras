@@ -154,7 +154,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
             <View style={styles.hostRow}>
               <View style={styles.hostAvatar}>
-                <BrandArchitecturalLogo size={22} color="#09090B" />
+                <BrandArchitecturalLogo size={42} color="#09090B" />
               </View>
               <View style={styles.hostTextCol}>
                 <Text style={styles.hostTitle}>
@@ -422,9 +422,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#F4F4F5',
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },

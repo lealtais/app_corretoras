@@ -180,10 +180,10 @@ export const PraiaGrandeMap: React.FC<PraiaGrandeMapProps> = ({
         });
 
         L.tileLayer(
-          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           {
             maxZoom: 19,
-            attribution: '© OpenStreetMap · CARTO',
+            attribution: '© OpenStreetMap contributors',
           }
         ).addTo(map);
 

@@ -21,12 +21,7 @@ interface AuthScreenProps {
   onAuthenticated: (user: User) => void;
 }
 
-const BrandLogoIcon = () => (
-  <Svg width={28} height={28} viewBox="0 0 28 28" fill="none">
-    <Rect x={2} y={2} width={13} height={13} rx={3} fill="#09090B" />
-    <Rect x={13} y={13} width={13} height={13} rx={3} fill="#09090B" />
-  </Svg>
-);
+import { BrandArchitecturalLogo } from '../components/LucideIcons';
 
 const GoogleDisabledIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24">
@@ -98,7 +93,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticated }) => {
       >
         <View style={styles.cardContainer}>
           <View style={styles.logoWrapper}>
-            <BrandLogoIcon />
+            <BrandArchitecturalLogo size={40} />
           </View>
 
           <Text style={styles.title}>

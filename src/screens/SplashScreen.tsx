@@ -150,7 +150,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             />
           ) : (
             <View style={styles.iconWrapper}>
-              <BrandArchitecturalLogo size={42} color="#09090B" />
+              <BrandArchitecturalLogo size={52} />
             </View>
           )}
         </Animated.View>

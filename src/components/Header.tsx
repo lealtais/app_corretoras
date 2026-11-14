@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
           activeOpacity={0.7}
         >
           <View style={styles.iconBadge}>
-            <BrandArchitecturalLogo size={22} color="#09090B" />
+            <BrandArchitecturalLogo size={36} color="#09090B" />
           </View>
           <View style={styles.titleColumn}>
             <Text style={styles.brandTitle}>Corretoras de Sucesso</Text>
@@ -72,12 +72,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: '#F4F4F5',
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -1,5 +1,8 @@
 import React from 'react';
+import { Image } from 'react-native';
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
+
+const BRAND_LOGO_IMAGE = require('../../assets/brand-logo.png');
 
 interface IconProps {
   size?: number;
@@ -9,12 +12,12 @@ interface IconProps {
 
 export const BrandArchitecturalLogo: React.FC<{ size?: number; color?: string }> = ({
   size = 24,
-  color = '#09090B',
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 28 28" fill="none">
-    <Rect x={2} y={2} width={13} height={13} rx={3.5} fill={color} />
-    <Rect x={13} y={13} width={13} height={13} rx={3.5} fill={color} />
-  </Svg>
+  <Image
+    source={BRAND_LOGO_IMAGE}
+    style={{ width: size, height: size }}
+    resizeMode="contain"
+  />
 );
 
 export const LucideWaves: React.FC<IconProps> = ({

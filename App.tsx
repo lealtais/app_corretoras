@@ -16,6 +16,7 @@ import {
 } from './src/hooks';
 import { BottomNav, TabType } from './src/components/BottomNav';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { MapScreen } from './src/screens/MapScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -142,6 +143,16 @@ export default function App() {
                   onClearFilter={clearFilter}
                   currentUser={currentUser}
                   onLogout={handleLogout}
+                />
+              )}
+
+              {currentTab === 'map' && (
+                <MapScreen
+                  properties={properties}
+                  onSelectProperty={(prop) => setSelectedProperty(prop)}
+                  onToggleFavorite={handleToggleFavorite}
+                  focusPropertyId={selectedProperty?.id || null}
+                  onClearFocus={() => setSelectedProperty(null)}
                 />
               )}
 
