@@ -902,11 +902,7 @@ const styles = StyleSheet.create({
     color: '#DC2626',
   },
   fixedAgencyField: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FED7AA',
-    borderRadius: 10,
-    padding: 12,
+    paddingVertical: 10,
     marginBottom: 16,
   },
   fixedAgencyHeader: {
