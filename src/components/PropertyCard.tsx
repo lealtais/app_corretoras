@@ -33,8 +33,23 @@ export const buildWhatsAppMessage = (property: Property): string => {
 
 export const openExternalWhatsApp = (property: Property) => {
   const text = encodeURIComponent(buildWhatsAppMessage(property));
-  const url = `https://wa.me/${AGENCY_CONFIG.whatsappNumber}?text=${text}`;
-  Linking.openURL(url);
+  const url = `https://api.whatsapp.com/send?phone=${AGENCY_CONFIG.whatsappNumber}&text=${text}`;
+  
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  
+  Linking.canOpenURL(url)
+    .then((supported) => {
+      if (supported) {
+        return Linking.openURL(url);
+      }
+      return Linking.openURL(`https://wa.me/${AGENCY_CONFIG.whatsappNumber}?text=${text}`);
+    })
+    .catch(() => {
+      Linking.openURL(`https://wa.me/${AGENCY_CONFIG.whatsappNumber}?text=${text}`);
+    });
 };
 
 export const PropertyCard: React.FC<PropertyCardProps> = ({

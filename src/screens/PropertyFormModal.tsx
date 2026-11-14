@@ -18,6 +18,7 @@ import { Input, Button, Badge, IconButton } from '../components/ui';
 import { theme } from '../constants/theme';
 import { AGENCY_CONFIG } from '../constants/agency';
 import { geocodeAndCalculateBeachDistance } from '../utils/beachDistanceCalculator';
+import { fetchAddressByCep } from '../services/externalApis';
 
 interface PropertyFormModalProps {
   visible: boolean;
@@ -70,6 +71,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   >('Apartamento');
   const [status, setStatus] = useState<'Disponível' | 'Reservado' | 'Vendido'>('Disponível');
   const [location, setLocation] = useState('');
+  const [cep, setCep] = useState('');
+  const [cepStatus, setCepStatus] = useState('');
   const [internalAddress, setInternalAddress] = useState('');
   const [beachDistance, setBeachDistance] = useState('100');
   const [isCalculatingDistance, setIsCalculatingDistance] = useState(false);
@@ -205,6 +208,32 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     const result = await geocodeAndCalculateBeachDistance(query);
     setBeachDistance(String(result.distanceMeters));
     setIsCalculatingDistance(false);
+  };
+
+  const handleCepChange = async (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 8);
+    setCep(digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits);
+
+    if (digits.length < 8) {
+      setCepStatus('');
+      return;
+    }
+
+    setCepStatus('Consultando ViaCEP...');
+    try {
+      const addr = await fetchAddressByCep(digits);
+      setCepStatus(`Encontrado: ${addr.neighborhood || addr.street} (${addr.city})`);
+      if (addr.neighborhood) {
+        setLocation(`${addr.neighborhood}, Praia Grande (Bairro)`);
+      }
+      if (addr.street) {
+        const full = `${addr.street}${addr.neighborhood ? ', ' + addr.neighborhood : ''}, Praia Grande`;
+        setInternalAddress(full);
+        handleCalculateFromAddress(full);
+      }
+    } catch (err: any) {
+      setCepStatus(err?.message || 'CEP não localizado');
+    }
   };
 
   const handleSave = async () => {
@@ -492,6 +521,30 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                 <Badge key={t} label={t} selected={type === t} onPress={() => setType(t)} />
               ))}
             </ScrollView>
+          </View>
+
+          <View style={{ marginBottom: 12 }}>
+            <Input
+              label="Buscar por CEP (ViaCEP — Preenche Bairro e Endereço automaticamente)"
+              placeholder="Ex: 11700-000"
+              keyboardType="numeric"
+              maxLength={9}
+              value={cep}
+              onChangeText={handleCepChange}
+            />
+            {cepStatus !== '' && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  marginTop: -6,
+                  marginBottom: 6,
+                  color: cepStatus.includes('não') ? '#DC2626' : '#059669',
+                  fontWeight: '600',
+                }}
+              >
+                {cepStatus}
+              </Text>
+            )}
           </View>
 
           <Input
